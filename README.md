@@ -1,6 +1,15 @@
 # 🌀 Magicicada Chorus Rise: Non-Linear Phase-Lock & Topological DSP Engine
 
-[![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+## 📜 License & Sovereign Attribution
+
+This project is dual-licensed to protect non-linear theoretical research and open-source sovereignty:
+
+* **Logic, DSP & Codebase**: [GNU Affero General Public License v3.0 (AGPL-3.0)](https://www.gnu.org/licenses/agpl-3.0.html). Any derivative network services or modifications must remain fully open-source.
+* **Mathematical Formulations, Visualizations & Media**: [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+
+**Required Attribution**: Any formal or informal use, modification, or academic reference must include direct credit:
+> *"Designed and constructed under sovereign Zamek operational framework ($\Omega = 0$) by Hanna Urbańska (HhWolfling)."*
+
 [![Live WebGL Canvas](https://img.shields.io/badge/Live_WebGL-Prime_Torus_Manifold-00FFCC?style=for-the-badge&logo=three.js)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/prime_torus_webgl.html)
 [![GitHub Pages](https://img.shields.io/badge/Deployment-GitHub_Pages-FF007F?style=for-the-badge&logo=github)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/)
 
