@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRIME TORUS MANIFOLD (T²) // WEBGL CANVAS</title>
+    <title>PRIME TORUS MANIFOLD (T²) // WEBGL & AUDIO CANVAS</title>
     <style>
         * {
             box-sizing: border-box;
@@ -32,7 +32,7 @@
             top: 20px;
             left: 20px;
             z-index: 10;
-            background: rgba(10, 10, 20, 0.85);
+            background: rgba(10, 10, 20, 0.88);
             border: 1px solid #1A2B4C;
             padding: 20px;
             border-radius: 8px;
@@ -70,6 +70,31 @@
             height: 4px;
             border-radius: 2px;
         }
+        .audio-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 12px;
+            background: rgba(0, 255, 204, 0.1);
+            border: 1px solid #00FFCC;
+            color: #00FFCC;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .audio-btn:hover {
+            background: rgba(0, 255, 204, 0.25);
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.4);
+        }
+        .audio-btn.active {
+            background: rgba(255, 0, 127, 0.2);
+            border-color: #FF007F;
+            color: #FF007F;
+        }
         .telemetry {
             margin-top: 15px;
             padding-top: 12px;
@@ -101,6 +126,8 @@
         <h1>Prime Torus Manifold</h1>
         <h2>Phase-Lock Winding Orbit (T²)</h2>
 
+        <button id="btn-audio" class="audio-btn">🔊 INITIALIZE AUDIO SYNTHESIZER</button>
+
         <div class="control-group">
             <label>Prime Brood P (p): <span id="val-p">13</span></label>
             <input type="range" id="slider-p" min="1" max="31" step="1" value="13">
@@ -123,7 +150,7 @@
 
         <div class="telemetry">
             <div>Winding Ratio: <span id="tele-ratio">13 / 17 (Prime Coprime)</span></div>
-            <div>Phase Origin Anchor: 65.41 Hz</div>
+            <div>Phase Origin Anchor: <span id="tele-freq-p">65.41 Hz</span> | <span id="tele-freq-q">65.41 Hz</span></div>
             <div>Ohmic Drag: Ω = 0</div>
             <div class="status-badge" id="tele-coprime">STATE: COPRIME PHASE LOCK</div>
         </div>
@@ -204,7 +231,6 @@
             const knotCurve = new PrimeTorusKnotCurve(currentP, currentQ, R_major, r_minor);
             const tubeGeo = new THREE.TubeGeometry(knotCurve, 1200, tubeRadius, 12, true);
             
-            // Glowing neon cyan / magenta gradient shader-like mesh
             const tubeMat = new THREE.MeshStandardMaterial({
                 color: 0x00ffcc,
                 emissive: 0x00aa88,
@@ -216,7 +242,6 @@
             scene.add(knotMesh);
         }
 
-        // --- 6. GOLDEN ANCHOR NODE (65.41 Hz Origin) ---
         const originGeo = new THREE.SphereGeometry(0.12, 32, 32);
         const originMat = new THREE.MeshBasicMaterial({ color: 0xffd700 });
         originMarker = new THREE.Mesh(originGeo, originMat);
@@ -224,12 +249,73 @@
 
         buildKnotGeometry();
 
-        // --- 7. GCD / COPRIMALITY CHECKER ---
+        // --- 6. WEB AUDIO API SYNTHESIZER ---
+        let audioCtx = null;
+        let oscP = null, oscQ = null;
+        let gainNode = null;
+        let isAudioPlaying = false;
+        const baseFreq = 65.41; // C2 fundamental anchor
+
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime); // Safe volume level
+
+            oscP = audioCtx.createOscillator();
+            oscQ = audioCtx.createOscillator();
+
+            oscP.type = 'sawtooth';
+            oscQ.type = 'sine';
+
+            updateAudioFrequencies();
+
+            oscP.connect(gainNode);
+            oscQ.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscP.start();
+            oscQ.start();
+            isAudioPlaying = true;
+        }
+
+        function updateAudioFrequencies() {
+            if (!audioCtx) return;
+            const freqP = baseFreq * (currentP / 13);
+            const freqQ = baseFreq * (currentQ / 17);
+            
+            oscP.frequency.setTargetAtTime(freqP, audioCtx.currentTime, 0.05);
+            oscQ.frequency.setTargetAtTime(freqQ, audioCtx.currentTime, 0.05);
+
+            document.getElementById('tele-freq-p').innerText = `${freqP.toFixed(1)} Hz`;
+            document.getElementById('tele-freq-q').innerText = `${freqQ.toFixed(1)} Hz`;
+        }
+
+        const btnAudio = document.getElementById('btn-audio');
+        btnAudio.addEventListener('click', () => {
+            if (!isAudioPlaying) {
+                initAudio();
+                btnAudio.innerText = "🔇 MUTE AUDIO SYNTHESIZER";
+                btnAudio.classList.add('active');
+            } else {
+                if (audioCtx) {
+                    audioCtx.suspend();
+                    isAudioPlaying = false;
+                    btnAudio.innerText = "🔊 INITIALIZE AUDIO SYNTHESIZER";
+                    btnAudio.classList.remove('active');
+                } else {
+                    audioCtx.resume();
+                    isAudioPlaying = true;
+                    btnAudio.innerText = "🔇 MUTE AUDIO SYNTHESIZER";
+                    btnAudio.classList.add('active');
+                }
+            }
+        });
+
+        // --- 7. UI EVENT LISTENERS ---
         function gcd(a, b) {
             return b === 0 ? a : gcd(b, a % b);
         }
 
-        // --- 8. UI EVENT LISTENERS ---
         const sliderP = document.getElementById('slider-p');
         const sliderQ = document.getElementById('slider-q');
         const sliderSpeed = document.getElementById('slider-speed');
@@ -264,6 +350,7 @@
             }
 
             buildKnotGeometry();
+            updateAudioFrequencies();
         }
 
         sliderP.addEventListener('input', updateKnot);
@@ -273,7 +360,7 @@
             valSpeed.innerText = parseFloat(sliderSpeed.value).toFixed(1);
         });
 
-        // --- 9. ANIMATION LOOP ---
+        // --- 8. ANIMATION LOOP ---
         let clock = new THREE.Clock();
 
         function animate() {
@@ -282,17 +369,14 @@
             const speed = parseFloat(sliderSpeed.value);
             const delta = clock.getDelta() * speed;
 
-            // Rotate Torus and Knot Manifold smoothly
             if (knotMesh) knotMesh.rotation.z += 0.15 * delta;
             torusMesh.rotation.z += 0.15 * delta;
 
-            // Animate Golden Origin Node along the parametric trajectory
             const elapsedTime = clock.getElapsedTime() * speed * 0.1;
             const u = elapsedTime % 1;
             const curve = new PrimeTorusKnotCurve(currentP, currentQ, R_major, r_minor);
             const pt = curve.getPoint(u);
             
-            // Rotate position vector to match manifold rotation
             pt.applyAxisAngle(new THREE.Vector3(0, 0, 1), torusMesh.rotation.z);
             originMarker.position.copy(pt);
 
