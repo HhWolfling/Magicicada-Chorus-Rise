@@ -20,6 +20,7 @@ This project is dual-licensed to protect non-linear theoretical research and ope
 
 Experience the high-dimensional phase space directly in your browser:
 * **Interactive Torus Engine**: [https://hhwolfling.github.io/Magicicada-Chorus-Rise/](https://hhwolfling.github.io/Magicicada-Chorus-Rise/)
+* **Interactive 8D Octonionic Shader Canvas**: [https://hhwolfling.github.io/Magicicada-Chorus-Rise/octonionic_shader_webgl.html](https://hhwolfling.github.io/Magicicada-Chorus-Rise/octonionic_shader_webgl.html)
 
 ---
 
