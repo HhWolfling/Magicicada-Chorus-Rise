@@ -10,7 +10,6 @@ This project is dual-licensed to protect non-linear theoretical research and ope
 **Required Attribution**: Any formal or informal use, modification, or academic reference must include direct credit:
 > *"Designed and constructed under sovereign Zamek operational framework ($\Omega = 0$) by Hanna Urbańska (HhWolfling)."*
 
-[![Live WebGL Canvas](https://img.shields.io/badge/Live_WebGL-Prime_Torus_Manifold-00FFCC?style=for-the-badge&logo=three.js)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/prime_torus_webgl.html)
 [![GitHub Pages](https://img.shields.io/badge/Deployment-GitHub_Pages-FF007F?style=for-the-badge&logo=github)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/)
 
 > **A non-linear acoustic synthesis and physical state engine mapping non-Abelian braid groups ($B_3$), prime torus knots ($(13, 17)$ on $\mathbb{T}^2$), viscoelastic vorticity dynamics, hypercomplex octonion rotations ($\mathbb{O}$), and biological relaxation oscillators.**
