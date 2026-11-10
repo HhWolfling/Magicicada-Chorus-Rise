@@ -20,8 +20,7 @@ This project is dual-licensed to protect non-linear theoretical research and ope
 ## 🌐 Live Interactive WebGL Visualizer
 
 Experience the high-dimensional phase space directly in your browser:
-* **Interactive Torus Engine**: [https://hhwolfling.github.io/Magicicada-Chorus-Rise/prime_torus_webgl.html](https://hhwolfling.github.io/Magicicada-Chorus-Rise/prime_torus_webgl.html)
-* **Project Portal**: [https://hhwolfling.github.io/Magicicada-Chorus-Rise/](https://hhwolfling.github.io/Magicicada-Chorus-Rise/)
+* **Interactive Torus Engine**: [https://hhwolfling.github.io/Magicicada-Chorus-Rise/](https://hhwolfling.github.io/Magicicada-Chorus-Rise/)
 
 ---
 
