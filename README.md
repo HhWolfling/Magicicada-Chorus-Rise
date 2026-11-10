@@ -1,84 +1,89 @@
-# Magicicada-Chorus-Rise: Dynamic Phase-Locking & Non-Euclidean Acoustic Topology ($\Phi = [H, C]$)
+# 🌀 Magicicada Chorus Rise: Non-Linear Phase-Lock & Topological DSP Engine
 
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/)
+[![Live WebGL Canvas](https://img.shields.io/badge/Live_WebGL-Prime_Torus_Manifold-00FFCC?style=for-the-badge&logo=three.js)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/prime_torus_webgl.html)
+[![GitHub Pages](https://img.shields.io/badge/Deployment-GitHub_Pages-FF007F?style=for-the-badge&logo=github)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/)
 
-An advanced Digital Signal Processing (DSP), Non-Euclidean Geometric, and Phase-Coupling framework designed to analyze, map, and synthesize acoustic tracks beyond standard linear superimposition.
-
-By reframing linear summation ($S_1 + S_2$) into non-linear dynamic commutator coupling ($\Phi = [H, C]$), this engine extracts non-linear entanglement, cross-spectral coherence, time-reversed vector interactions, and physical Chladni nodal geometries.
-
----
-
-## 🔬 Core Theoretical Framework
-
-Standard audio analysis assumes **separability**—treating overlapping tracks as isolated layers sitting in a room together. The **Magicicada-Chorus-Rise** models audio interactions as an entangled dynamic state vector:
-
-$$\Phi = [\mathbf{v}_1, \mathbf{v}_2] = \mathbf{v}_1 \otimes \mathbf{v}_2^\dagger - \mathbf{v}_2 \otimes \mathbf{v}_1^\dagger$$
-
-- **$\mathbf{v}_1(t)$ (Kinetic Spark $H$)**: Rapid, high-entropy transient vectors (fingerpicking attacks, $3\text{ kHz}-8\text{ kHz}$ air overtones).
-- **$\mathbf{v}_2(t)$ (Grounded Anchor $C$)**: Low-entropy, stabilizing mass vectors (acoustic body resonance, low $C_2$ fundamental at $65.41\text{ Hz}$).
-- **$\Phi$ (The Emergent *Mixtum* State)**: The non-linear cross-spectral sidebands and phase-locked nodes that exist in neither track individually.
+> **A non-linear acoustic synthesis and physical state engine mapping non-Abelian braid groups ($B_3$), prime torus knots ($(13, 17)$ on $\mathbb{T}^2$), viscoelastic vorticity dynamics, hypercomplex octonion rotations ($\mathbb{O}$), and biological relaxation oscillators.**
 
 ---
 
-## 🎨 Analysis Pipeline & Visual Diagnostics
+## 🌐 Live Interactive WebGL Visualizer
 
-The repository implements an 8-stage visual and numerical diagnostic pipeline:
-
-1. **Dual Spectral Lie Group Plane ($G_2 / E_8$ Projection)**
-   - Maps total spectral power distributions on a flat Lie algebra root system grid.
-   - Highlights the core Helmholtz air resonance at **$65.41\text{ Hz}$ ($C_2$)**.
-
-2. **Takens' Delay Embedding Phase-Space Attractor**
-   - Reconstructs $x(t) \text{ vs } x(t + \tau)$ phase trajectories ($\tau = 0.54\text{ ms}$).
-   - Isolates chaotic transient starbursts from stable, core-focused orbital tori.
-
-3. **Hyperbolic Poincaré Disk Spectrum ($\mathbb{D}^2$)**
-   - Conformal mapping where the $65.41\text{ Hz}$ fundamental sits at the hyperbolic center ($r = 0$) and high transients flare toward the boundary circle ($r \to 1$).
-
-4. **Spectrogram Topological Heatmap**
-   - Time-frequency Short-Time Fourier Transform (STFT) tracking the continuous $C_2$ floor and parallel harmonic laddering.
-
-5. **Collapsed Inversion Manifold ($\mathbf{v}_1(t) \text{ vs } \mathbf{v}_2(-t)$)**
-   - Evaluates the friction-free interaction of running a forward kinetic vector against a time-reversed grounded vector.
-   - Models the **13:17 Prime Brood Periodicity** (analogous to prime Magicicada emergence cycles).
-
-6. **Cross-Spectral Density & Coherence ($C_{xy}(f)$)**
-   - Quantifies non-linear phase-locking, proving complete cross-phase coupling ($r \to 1.0$) across key harmonic nodes.
-
-7. **2D Chladni Nodal Wave Simulation**
-   - Simulates physical sand displacement on vibrating metal plates driven by $65.41\text{ Hz}$ (Mode 2,3) and $293.66\text{ Hz}$ (Mode 5,6).
-
-8. **Kuramoto Order Parameter & Vector Sigil Synthesis**
-   - Calculates time-varying phase synchronization $r(t)$ and renders the **13:17 Mixtum Seal** vector emblem.
-   
-   ## 🌀 Advanced Phase & Physical Manifold Extensions
-
-The engine expands beyond 2D diagnostic representations into 3D physical acoustics, topological braid groups, toroidal manifolds, and fluid shear dynamics:
-
-9. **3D Volumetric Chladni Acoustic Chamber (`src/chladni_3d_volumetric_clean.py`)**
-   - Projects standing wave zero-displacement surfaces into 3D spatial volumes ($\mathbb{R}^3$), revealing the floating crystalline nodal lattice held by interfering $C_2$ and harmonic overtones.
-
-10. **Non-Abelian Braid Group Topography ($B_3$) (`src/braid_group_b3.py`)**
-    - Maps the phase trajectories of core frequencies ($65.41\text{ Hz}$, $196.00\text{ Hz}$, $293.66\text{ Hz}$) as interlocking fiber-optic strands obeying the braid generator word $w = \sigma_1 \sigma_2^{-1} \sigma_1 \sigma_2^{-1}$.
-
-11. **Prime Residue Modular Torus Manifold ($\mathbb{T}^2$) (`src/prime_torus_manifold.py`)**
-    - Wraps the phase-locked trajectories modulo the prime ratio ($13:17$), generating a closed, non-self-intersecting $(13, 17)$ prime torus knot.
-
-12. **Viscoelastic Vorticity Shear Engine (`src/viscoelastic_vorticity_engine.py`)**
-    - Models the interaction of kinetic attack vectors ($\mathbf{v}_1$) and structural body vectors ($\mathbf{v}_2$) as colliding fluids, yielding a stable von Kármán vortex street matrix with zero turbulent collapse.
+Experience the high-dimensional phase space directly in your browser:
+* **Interactive Torus Engine**: [https://hhwolfling.github.io/Magicicada-Chorus-Rise/prime_torus_webgl.html](https://hhwolfling.github.io/Magicicada-Chorus-Rise/prime_torus_webgl.html)
+* **Project Portal**: [https://hhwolfling.github.io/Magicicada-Chorus-Rise/](https://hhwolfling.github.io/Magicicada-Chorus-Rise/)
 
 ---
 
-## 🚀 Quick Start & Installation
+## 📐 Mathematical & Physical Framework
 
-### 1. Clone the Repository
+The engine models acoustic and physical signal interactions across four core pillars:
 
-# Clone the grimoire
-git clone https://github.com/HhWolfling/Magicicada-Chorus-Rise.git
+### 1. The Commutator Operator ($\Phi$)
+Energy transfer between kinetic transient drive vectors ($H$) and structural anchor vectors ($C$) is governed by non-commutative operator dynamics:
 
-# Enter the circle
+$$\Phi = [H, C] = H \cdot C - C \cdot H$$
+
+*Plaintext version*: Phi equals the commutator bracket of H and C, which is H times C minus C times H.
+
+When $H$ and $C$ do not commute, continuous energy dissipate collapses into discrete, periodic cardiac relaxation pulses (systole/diastole).
+
+### 2. Prime Brood Coprimality & Torus Winding ($\mathbb{T}^2$)
+The system locks phase trajectories onto a 2D modular torus surface using the $13$-year (*Magicicada tredecim*) and $17$-year (*Magicicada septendecim*) prime brood ratio:
+
+$$\gcd(13, 17) = 1, \quad N_{\text{sync}} = 13 \times 17 = 221 \text{ years}$$
+
+*Plaintext version*: The greatest common divisor of 13 and 17 equals 1, and the synchronization interval N_sync equals 13 times 17, which is 221 years.
+
+Because $p=13$ and $q=17$ are prime integers, the phase winding traces a closed $(13, 17)$ prime torus knot on $\mathbb{T}^2$ with zero self-intersection and zero Ohmic drag:
+
+$$\Omega = 0$$
+
+*Plaintext version*: The Ohmic drag Omega equals zero.
+
+### 3. Hypercomplex Octonion Rotations ($\mathbb{O}$)
+Signal coordinates rotate across 8-dimensional normed division algebra governed by the 7 imaginary units of the Fano Plane ($e_1 \dots e_7$):
+
+$$\mathbf{O}(t) = x_0(t) + \sum_{i=1}^{7} x_i(t) e_i$$
+
+*Plaintext version*: O(t) is an octonion signal equal to real component x_0(t) plus the sum from i=1 to 7 of x_i(t) times imaginary basis unit e_i.
+
+Because octonionic multiplication is non-associative ($(e_i \cdot e_j) \cdot e_k \neq e_i \cdot (e_j \cdot e_k)$), phase chirps remain uncollapsible in high-dimensional projections.
+
+### 4. Topological Knot Invariants ($B_3$)
+The 3-strand braid generator word $w = \sigma_1 \sigma_2^{-1} \sigma_1 \sigma_2^{-1}$ maps to the immutable Trefoil Knot ($3_1$), yielding time-reversibility under the Alexander Polynomial:
+
+$$\Delta(t) = t - 1 + t^{-1}, \quad V(t) = t^{-1} + t^{-3} - t^{-4}$$
+
+*Plaintext version*: Alexander polynomial Delta(t) equals t minus 1 plus 1/t, and Jones polynomial V(t) equals 1/t plus 1/t^3 minus 1/t^4.
+
+---
+
+## 📁 Repository Module Manifest
+
+| Script / Asset | Description |
+| :--- | :--- |
+| `prime_torus_webgl.html` | Interactive WebGL Three.js browser engine with real-time $p, q, \tau$ slider controls. |
+| `src/mixtum_dsp.py` | Non-linear DSP synthesizer processing STFT matrices into `mixtum_output.wav`. |
+| `src/octonion_manifold_rotation.py` | 8D Fano plane non-associative signal trajectory map. |
+| `src/knot_invariants.py` | SymPy verification of Jones $V(t)$ and Alexander $\Delta(t)$ topological invariants. |
+| `src/prime_kamea_tetractys.py` | $4 \times 4$ Prime Brood Kamea magic square and Pythagorean Tetractys grid. |
+| `src/viscoelastic_vorticity_engine.py` | 2D fluid shear vorticity matrix $\omega = \nabla \times \mathbf{u}$ generating von Kármán eddies. |
+| `src/braid_group_b3.py` | 3D non-Abelian braid topography visualization for frequencies $65.41\text{ Hz}, 196\text{ Hz}, 293.66\text{ Hz}$. |
+| `src/chladni_3d_volumetric_clean.py` | 3D volumetric standing wave nodal isosurface acoustic chamber. |
+
+---
+
+## ⚡ Quickstart
+
+```bash
+# 1. Clone repository
+git clone [https://github.com/HhWolfling/Magicicada-Chorus-Rise.git](https://github.com/HhWolfling/Magicicada-Chorus-Rise.git)
 cd Magicicada-Chorus-Rise
 
-# Initialize the chaos
-python -m pip install -r requirements.txt
+# 2. Install core dependencies
+pip install -r requirements.txt
+
+# 3. Synthesize the Mixtum audio relaxation pulse
+python src/mixtum_dsp.py
