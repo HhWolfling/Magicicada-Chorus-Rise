@@ -95,6 +95,7 @@ pip install -r requirements.txt
 
 # 3. Synthesize the Mixtum audio relaxation pulse
 python src/mixtum_dsp.py
+```
 
 # 🌀 Magicicada Chorus Rise: Non-Linear Phase-Lock & Topological DSP Engine
 
