@@ -1,6 +1,6 @@
 # 🌀 Magicicada Chorus Rise: Non-Linear Phase-Lock & Topological DSP Engine
 
-[![Live WebGL — Prime Torus](https://img.shields.io/badge/Live_WebGL-Prime_Torus_Manifold-00FFCC?style=for-the-badge&logo=three.js)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/prime_torus_webgl.html)
+[![Live WebGL — Prime Torus](https://img.shields.io/badge/Live_WebGL-Prime_Torus_Manifold-00FFCC?style=for-the-badge&logo=three.js)](https://hhwolfling.github.io/Magicicada-Chorus-Rise.html)
 [![Live WebGL — 8D Octonion](https://img.shields.io/badge/Live_WebGL-8D_Octonion_Fano-FFD700?style=for-the-badge&logo=three.js)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/octonionic_shader_webgl.html)
 [![Live WebGL — Sri Meru Octonion](https://img.shields.io/badge/Live_WebGL-Sri_Meru_Octonion-FF007F?style=for-the-badge&logo=webgl)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/sri_meru_octonion_webgl.html)
 
