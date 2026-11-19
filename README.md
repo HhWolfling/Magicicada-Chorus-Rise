@@ -1,6 +1,6 @@
 # 🌀 Magicicada Chorus Rise: Non-Linear Phase-Lock & Topological DSP Engine
 
-[![Live WebGL — Prime Torus](https://img.shields.io/badge/Live_WebGL-Prime_Torus_Manifold-00FFCC?style=for-the-badge&logo=three.js)](https://hhwolfling.github.io/Magicicada-Chorus-Rise.html)
+[![Live WebGL — Prime Torus](https://img.shields.io/badge/Live_WebGL-Prime_Torus_Manifold-00FFCC?style=for-the-badge&logo=three.js)](https://hhwolfling.github.io/Magicicada-Chorus-Rise)
 [![Live WebGL — 8D Octonion](https://img.shields.io/badge/Live_WebGL-8D_Octonion_Fano-FFD700?style=for-the-badge&logo=three.js)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/octonionic_shader_webgl.html)
 [![Live WebGL — Sri Meru Octonion](https://img.shields.io/badge/Live_WebGL-Sri_Meru_Octonion-FF007F?style=for-the-badge&logo=webgl)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/sri_meru_octonion_webgl.html)
 
@@ -12,7 +12,7 @@
 
 Experience the high-dimensional phase spaces directly in your browser:
 
-* **1. Prime Brood Torus Manifold ($(13, 17)$ on $\mathbb{T}^2$):** [https://hhwolfling.github.io/Magicicada-Chorus-Rise/prime_torus_webgl.html](https://hhwolfling.github.io/Magicicada-Chorus-Rise/prime_torus_webgl.html)[cite: 5]
+* **1. Prime Brood Torus Manifold ($(13, 17)$ on $\mathbb{T}^2$):** [https://hhwolfling.github.io/Magicicada-Chorus-Rise](https://hhwolfling.github.io/Magicicada-Chorus-Rise)[cite: 5]
 * **2. 8D Octonionic Fano Plane Engine ($\mathbb{O}$):** [https://hhwolfling.github.io/Magicicada-Chorus-Rise/octonionic_shader_webgl.html](https://hhwolfling.github.io/Magicicada-Chorus-Rise/octonionic_shader_webgl.html)[cite: 6]
 * **3. 8D Octonion × 3D Sri Meru Volumetric Manifold (with `13:17` Web Audio):** [https://hhwolfling.github.io/Magicicada-Chorus-Rise/sri_meru_octonion_webgl.html](https://hhwolfling.github.io/Magicicada-Chorus-Rise/sri_meru_octonion_webgl.html)[cite: 2]
 
