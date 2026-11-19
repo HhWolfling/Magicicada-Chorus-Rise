@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRIME TORUS MANIFOLD (T²) // WEBGL & AUDIO CANVAS</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+        body {
+            background-color: #05050A;
+            color: #00FFCC;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        .ui-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            background: rgba(10, 10, 20, 0.88);
+            border: 1px solid #1A2B4C;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 204, 0.15);
+            backdrop-filter: blur(8px);
+            width: 320px;
+        }
+        h1 {
+            font-size: 14px;
+            letter-spacing: 1.5px;
+            color: #00FFCC;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        h2 {
+            font-size: 10px;
+            color: #FF007F;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+        .control-group {
+            margin-bottom: 12px;
+        }
+        label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #8A9BA8;
+            margin-bottom: 4px;
+        }
+        input[type=range] {
+            width: 100%;
+            accent-color: #00FFCC;
+            background: #121C2B;
+            height: 4px;
+            border-radius: 2px;
+        }
+        .audio-btn {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 12px;
+            background: rgba(0, 255, 204, 0.1);
+            border: 1px solid #00FFCC;
+            color: #00FFCC;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .audio-btn:hover {
+            background: rgba(0, 255, 204, 0.25);
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.4);
+        }
+        .audio-btn.active {
+            background: rgba(255, 0, 127, 0.2);
+            border-color: #FF007F;
+            color: #FF007F;
+        }
+        .telemetry {
+            margin-top: 15px;
+            padding-top: 12px;
+            border-top: 1px solid #121C2B;
+            font-size: 10px;
+            color: #FFD700;
+            line-height: 1.5;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            background: rgba(0, 255, 204, 0.1);
+            border: 1px solid #00FFCC;
+            border-radius: 3px;
+            color: #00FFCC;
+            font-size: 9px;
+            margin-top: 8px;
+        }
+    </style>
+    <!-- Three.js and OrbitControls CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div class="ui-panel">
+        <h1>Prime Torus Manifold</h1>
+        <h2>Phase-Lock Winding Orbit (T²)</h2>
+
+        <button id="btn-audio" class="audio-btn">🔊 INITIALIZE AUDIO SYNTHESIZER</button>
+
+        <div class="control-group">
+            <label>Prime Brood P (p): <span id="val-p">13</span></label>
+            <input type="range" id="slider-p" min="1" max="31" step="1" value="13">
+        </div>
+
+        <div class="control-group">
+            <label>Prime Brood Q (q): <span id="val-q">17</span></label>
+            <input type="range" id="slider-q" min="1" max="37" step="1" value="17">
+        </div>
+
+        <div class="control-group">
+            <label>Phase Velocity (τ): <span id="val-speed">1.0</span></label>
+            <input type="range" id="slider-speed" min="0" max="3.0" step="0.1" value="1.0">
+        </div>
+
+        <div class="control-group">
+            <label>Knot Tube Radius (r): <span id="val-tube">0.03</span></label>
+            <input type="range" id="slider-tube" min="0.01" max="0.08" step="0.005" value="0.03">
+        </div>
+
+        <div class="telemetry">
+            <div>Winding Ratio: <span id="tele-ratio">13 / 17 (Prime Coprime)</span></div>
+            <div>Phase Origin Anchor: <span id="tele-freq-p">65.41 Hz</span> | <span id="tele-freq-q">65.41 Hz</span></div>
+            <div>Ohmic Drag: Ω = 0</div>
+            <div class="status-badge" id="tele-coprime">STATE: COPRIME PHASE LOCK</div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. PARAMETRIC KNOT CURVE CLASS ---
+        class PrimeTorusKnotCurve extends THREE.Curve {
+            constructor(p = 13, q = 17, R = 2.5, r = 0.9) {
+                super();
+                this.p = p;
+                this.q = q;
+                this.R = R;
+                this.r = r;
+            }
+            getPoint(t, optionalTarget = new THREE.Vector3()) {
+                const theta = t * Math.PI * 2;
+                const x = (this.R + this.r * Math.cos(this.q * theta)) * Math.cos(this.p * theta);
+                const y = (this.R + this.r * Math.cos(this.q * theta)) * Math.sin(this.p * theta);
+                const z = this.r * Math.sin(this.q * theta);
+                return optionalTarget.set(x, y, z);
+            }
+        }
+
+        // --- 2. THREE.JS SCENE SETUP ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x05050a);
+        scene.fog = new THREE.FogExp2(0x05050a, 0.08);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 4, 6);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // --- 3. LIGHTING ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+        scene.add(ambientLight);
+
+        const pointLight1 = new THREE.PointLight(0x00ffcc, 2, 20);
+        pointLight1.position.set(3, 4, 3);
+        scene.add(pointLight1);
+
+        const pointLight2 = new THREE.PointLight(0xff007f, 2, 20);
+        pointLight2.position.set(-3, -4, -3);
+        scene.add(pointLight2);
+
+        // --- 4. TORUS MANIFOLD WIREFRAME MESH ---
+        const R_major = 2.5;
+        const r_minor = 0.9;
+        const torusGeo = new THREE.TorusGeometry(R_major, r_minor, 32, 64);
+        const torusMat = new THREE.MeshBasicMaterial({
+            color: 0x121c2b,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.25
+        });
+        const torusMesh = new THREE.Mesh(torusGeo, torusMat);
+        torusMesh.rotation.x = Math.PI / 2;
+        scene.add(torusMesh);
+
+        // --- 5. PRIME KNOT GEOMETRY ---
+        let currentP = 13;
+        let currentQ = 17;
+        let tubeRadius = 0.03;
+        let knotMesh, originMarker;
+
+        function buildKnotGeometry() {
+            if (knotMesh) scene.remove(knotMesh);
+
+            const knotCurve = new PrimeTorusKnotCurve(currentP, currentQ, R_major, r_minor);
+            const tubeGeo = new THREE.TubeGeometry(knotCurve, 1200, tubeRadius, 12, true);
+            
+            const tubeMat = new THREE.MeshStandardMaterial({
+                color: 0x00ffcc,
+                emissive: 0x00aa88,
+                roughness: 0.2,
+                metalness: 0.8
+            });
+
+            knotMesh = new THREE.Mesh(tubeGeo, tubeMat);
+            scene.add(knotMesh);
+        }
+
+        const originGeo = new THREE.SphereGeometry(0.12, 32, 32);
+        const originMat = new THREE.MeshBasicMaterial({ color: 0xffd700 });
+        originMarker = new THREE.Mesh(originGeo, originMat);
+        scene.add(originMarker);
+
+        buildKnotGeometry();
+
+        // --- 6. WEB AUDIO API SYNTHESIZER ---
+        let audioCtx = null;
+        let oscP = null, oscQ = null;
+        let gainNode = null;
+        let isAudioPlaying = false;
+        const baseFreq = 65.41; // C2 fundamental anchor
+
+        function initAudio() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            gainNode = audioCtx.createGain();
+            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime); // Safe volume level
+
+            oscP = audioCtx.createOscillator();
+            oscQ = audioCtx.createOscillator();
+
+            oscP.type = 'sawtooth';
+            oscQ.type = 'sine';
+
+            updateAudioFrequencies();
+
+            oscP.connect(gainNode);
+            oscQ.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscP.start();
+            oscQ.start();
+            isAudioPlaying = true;
+        }
+
+        function updateAudioFrequencies() {
+            if (!audioCtx) return;
+            const freqP = baseFreq * (currentP / 13);
+            const freqQ = baseFreq * (currentQ / 17);
+            
+            oscP.frequency.setTargetAtTime(freqP, audioCtx.currentTime, 0.05);
+            oscQ.frequency.setTargetAtTime(freqQ, audioCtx.currentTime, 0.05);
+
+            document.getElementById('tele-freq-p').innerText = `${freqP.toFixed(1)} Hz`;
+            document.getElementById('tele-freq-q').innerText = `${freqQ.toFixed(1)} Hz`;
+        }
+
+        const btnAudio = document.getElementById('btn-audio');
+        btnAudio.addEventListener('click', () => {
+            if (!isAudioPlaying) {
+                initAudio();
+                btnAudio.innerText = "🔇 MUTE AUDIO SYNTHESIZER";
+                btnAudio.classList.add('active');
+            } else {
+                if (audioCtx) {
+                    audioCtx.suspend();
+                    isAudioPlaying = false;
+                    btnAudio.innerText = "🔊 INITIALIZE AUDIO SYNTHESIZER";
+                    btnAudio.classList.remove('active');
+                } else {
+                    audioCtx.resume();
+                    isAudioPlaying = true;
+                    btnAudio.innerText = "🔇 MUTE AUDIO SYNTHESIZER";
+                    btnAudio.classList.add('active');
+                }
+            }
+        });
+
+        // --- 7. UI EVENT LISTENERS ---
+        function gcd(a, b) {
+            return b === 0 ? a : gcd(b, a % b);
+        }
+
+        const sliderP = document.getElementById('slider-p');
+        const sliderQ = document.getElementById('slider-q');
+        const sliderSpeed = document.getElementById('slider-speed');
+        const sliderTube = document.getElementById('slider-tube');
+
+        const valP = document.getElementById('val-p');
+        const valQ = document.getElementById('val-q');
+        const valSpeed = document.getElementById('val-speed');
+        const valTube = document.getElementById('val-tube');
+        const teleRatio = document.getElementById('tele-ratio');
+        const teleCoprime = document.getElementById('tele-coprime');
+
+        function updateKnot() {
+            currentP = parseInt(sliderP.value);
+            currentQ = parseInt(sliderQ.value);
+            tubeRadius = parseFloat(sliderTube.value);
+
+            valP.innerText = currentP;
+            valQ.innerText = currentQ;
+            valTube.innerText = tubeRadius.toFixed(3);
+            teleRatio.innerText = `${currentP} / ${currentQ}`;
+
+            const isCoprime = gcd(currentP, currentQ) === 1;
+            if (isCoprime) {
+                teleCoprime.innerText = "STATE: COPRIME PHASE LOCK";
+                teleCoprime.style.borderColor = "#00FFCC";
+                teleCoprime.style.color = "#00FFCC";
+            } else {
+                teleCoprime.innerText = "STATE: RESONANT COLLAPSE (DEGENERATE)";
+                teleCoprime.style.borderColor = "#FF007F";
+                teleCoprime.style.color = "#FF007F";
+            }
+
+            buildKnotGeometry();
+            updateAudioFrequencies();
+        }
+
+        sliderP.addEventListener('input', updateKnot);
+        sliderQ.addEventListener('input', updateKnot);
+        sliderTube.addEventListener('input', updateKnot);
+        sliderSpeed.addEventListener('input', () => {
+            valSpeed.innerText = parseFloat(sliderSpeed.value).toFixed(1);
+        });
+
+        // --- 8. ANIMATION LOOP ---
+        let clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const speed = parseFloat(sliderSpeed.value);
+            const delta = clock.getDelta() * speed;
+
+            if (knotMesh) knotMesh.rotation.z += 0.15 * delta;
+            torusMesh.rotation.z += 0.15 * delta;
+
+            const elapsedTime = clock.getElapsedTime() * speed * 0.1;
+            const u = elapsedTime % 1;
+            const curve = new PrimeTorusKnotCurve(currentP, currentQ, R_major, r_minor);
+            const pt = curve.getPoint(u);
+            
+            pt.applyAxisAngle(new THREE.Vector3(0, 0, 1), torusMesh.rotation.z);
+            originMarker.position.copy(pt);
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
