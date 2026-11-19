@@ -2,8 +2,8 @@
 
 ### 2. `HARMONIC_TOPOLOGY.md` (Conceptual & Mathematical Bridge File)
 
-```markdown
-### Harmonic Topology: From Prime Cicada Broods & Pilot Waves to Octonionic Geometry and Spectral DSP
+
+# Harmonic Topology: From Prime Cicada Broods & Pilot Waves to Octonionic Geometry and Spectral DSP
 
 At first glance, pairing evolutionary biology (`Magicicada` 13- and 17-year prime life cycles) and de Broglie–Bohm pilot-wave phase mechanics with 3D Sri Meru geometry and the 10 Mahavidya acoustic profiles looks like an abrupt leap across unrelated worlds.
 
