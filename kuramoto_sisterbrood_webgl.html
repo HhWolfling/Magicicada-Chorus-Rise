@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTERBROOD KURAMOTO-CYMATIC ENGINE // WEBGL & AUDIO</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+        body {
+            background-color: #05050A;
+            color: #00FFCC;
+            font-family: 'Courier New', Courier, monospace;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        .ui-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            background: rgba(10, 10, 20, 0.88);
+            border: 1px solid #1A2B4C;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 24px rgba(0, 255, 204, 0.15);
+            backdrop-filter: blur(8px);
+            width: 335px;
+        }
+        h1 {
+            font-size: 13px;
+            letter-spacing: 1.5px;
+            color: #00FFCC;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+        h2 {
+            font-size: 10px;
+            color: #FF007F;
+            margin-bottom: 14px;
+            letter-spacing: 1px;
+        }
+        .control-group {
+            margin-bottom: 12px;
+        }
+        label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #8A9BA8;
+            margin-bottom: 4px;
+        }
+        input[type=range] {
+            width: 100%;
+            accent-color: #00FFCC;
+            background: #121C2B;
+            height: 4px;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .action-btn {
+            flex: 1;
+            padding: 9px 8px;
+            background: rgba(0, 255, 204, 0.1);
+            border: 1px solid #00FFCC;
+            color: #00FFCC;
+            font-family: inherit;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 0.8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .action-btn:hover {
+            background: rgba(0, 255, 204, 0.25);
+            box-shadow: 0 0 12px rgba(0, 255, 204, 0.35);
+        }
+        .action-btn.active {
+            background: rgba(255, 0, 127, 0.22);
+            border-color: #FF007F;
+            color: #FF007F;
+        }
+        .action-btn.secondary {
+            border-color: #FFD700;
+            color: #FFD700;
+            background: rgba(255, 215, 0, 0.08);
+        }
+        .action-btn.secondary:hover {
+            background: rgba(255, 215, 0, 0.22);
+        }
+        .telemetry {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #121C2B;
+            font-size: 10px;
+            color: #FFD700;
+            line-height: 1.6;
+        }
+        .meter-bar {
+            width: 100%;
+            height: 5px;
+            background: #121C2B;
+            border-radius: 3px;
+            margin: 6px 0;
+            overflow: hidden;
+        }
+        .meter-fill {
+            height: 100%;
+            width: 20%;
+            background: linear-gradient(90deg, #FF007F, #00FFCC, #FFD700);
+            transition: width 0.1s linear;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            background: rgba(0, 255, 204, 0.1);
+            border: 1px solid #00FFCC;
+            border-radius: 3px;
+            color: #00FFCC;
+            font-size: 9px;
+            margin-top: 6px;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+
+    <div id="canvas-container"></div>
+
+    <div class="ui-panel">
+        <h1>Kuramoto Sisterbrood</h1>
+        <h2>13:17 Biphase Cymatic Resonator</h2>
+
+        <div class="btn-row">
+            <button id="btn-audio" class="action-btn">🔊 IGNITE RESONATOR</button>
+            <button id="btn-scatter" class="action-btn secondary">⚡ SCATTER PHASES</button>
+        </div>
+
+        <div class="control-group">
+            <label>Kuramoto Coupling (K): <span id="val-k">2.40</span></label>
+            <input type="range" id="slider-k" min="0.0" max="5.0" step="0.05" value="2.40">
+        </div>
+
+        <div class="control-group">
+            <label>Cymatic Harmonic Mode (l): <span id="val-mode">5</span></label>
+            <input type="range" id="slider-mode" min="2" max="13" step="1" value="5">
+        </div>
+
+        <div class="control-group">
+            <label>Stella Octangula Spin (ω): <span id="val-spin">1.0</span></label>
+            <input type="range" id="slider-spin" min="0.0" max="3.0" step="0.1" value="1.0">
+        </div>
+
+        <div class="control-group">
+            <label>Prime Brood Ratio: <span>13 Cyan / 17 Magenta</span></label>
+        </div>
+
+        <div class="telemetry">
+            <div>Order Parameter r(t): <span id="tele-r">0.000</span></div>
+            <div class="meter-bar"><div id="r-meter" class="meter-fill"></div></div>
+            <div>Sister Frequencies: 65.41 Hz ⊗ 85.54 Hz</div>
+            <div>Meridian Spine: TOLT (5, 13, 25, 41) → Axis-Mundi</div>
+            <div>Ohmic Drag: <span id="tele-omega">Ω > 0 (DRIFTING)</span></div>
+            <div class="status-badge" id="tele-state">STATE: PHASE CONVERGENCE</div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. SCENE, CAMERA & RENDERER SETUP ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x05050a);
+        scene.fog = new THREE.FogExp2(0x05050a, 0.045);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 2.8, 8.8);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+
+        // Master Group offset slightly right on desktop so UI panel never obscures geometry
+        const masterGroup = new THREE.Group();
+        function updateLayoutOffset() {
+            masterGroup.position.x = window.innerWidth > 900 ? 1.15 : 0.0;
+        }
+        updateLayoutOffset();
+        scene.add(masterGroup);
+
+        // --- 2. LIGHTING ---
+        scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+
+        const lightCyan = new THREE.PointLight(0x00ffcc, 2.2, 25);
+        lightCyan.position.set(4, 4, 4);
+        masterGroup.add(lightCyan);
+
+        const lightMagenta = new THREE.PointLight(0xff007f, 2.2, 25);
+        lightMagenta.position.set(-4, -3, -4);
+        masterGroup.add(lightMagenta);
+
+        const lightGold = new THREE.PointLight(0xffd700, 1.8, 15);
+        lightGold.position.set(0, 0, 0);
+        masterGroup.add(lightGold);
+
+        // --- 3. AXIS-MUNDI VERTICAL MERIDIAN & TOLT SPINE NODES (5, 13, 25, 41) ---
+        const axisGeo = new THREE.CylinderGeometry(0.015, 0.015, 7.2, 16);
+        const axisMat = new THREE.MeshBasicMaterial({
+            color: 0xffd700,
+            transparent: true,
+            opacity: 0.65
+        });
+        const verticalMeridian = new THREE.Mesh(axisGeo, axisMat);
+        masterGroup.add(verticalMeridian);
+
+        // Four TOLT Spine Anchor Nodes: (5, 13, 25, 41)
+        const spineHeights = [-2.4, -1.5, 1.5, 2.4];
+        const spineRadii = [0.06, 0.08, 0.10, 0.12];
+        spineHeights.forEach((yPos, idx) => {
+            const nodeGeo = new THREE.OctahedronGeometry(spineRadii[idx], 0);
+            const nodeMat = new THREE.MeshBasicMaterial({ color: 0xffd700, wireframe: true });
+            const node = new THREE.Mesh(nodeGeo, nodeMat);
+            node.position.set(0, yPos, 0);
+            masterGroup.add(node);
+        });
+
+        // --- 4. CENTRAL 3D MACRO-CYMATIC SPHERICAL HARMONIC RESONATOR ---
+        const cymaticGeo = new THREE.IcosahedronGeometry(1.05, 5);
+        const basePositions = Float32Array.from(cymaticGeo.attributes.position.array);
+        const cymaticMat = new THREE.MeshStandardMaterial({
+            color: 0x0a192f,
+            emissive: 0x00ffcc,
+            emissiveIntensity: 0.25,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.55
+        });
+        const cymaticSphere = new THREE.Mesh(cymaticGeo, cymaticMat);
+        masterGroup.add(cymaticSphere);
+
+        // --- 5. INTERLOCKING STELLA OCTANGULA (UPWARD CYAN + DOWNWARD MAGENTA) ---
+        const tetraUpGeo = new THREE.TetrahedronGeometry(1.75, 0);
+        const tetraUpMat = new THREE.MeshBasicMaterial({
+            color: 0x00ffcc,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.45
+        });
+        const tetraUp = new THREE.Mesh(tetraUpGeo, tetraUpMat);
+        // Orient vertex straight up along Axis-Mundi
+        tetraUp.rotation.z = Math.PI / 4;
+        tetraUp.rotation.x = Math.atan(1 / Math.SQRT2);
+        masterGroup.add(tetraUp);
+
+        const tetraDownGeo = new THREE.TetrahedronGeometry(1.75, 0);
+        const tetraDownMat = new THREE.MeshBasicMaterial({
+            color: 0xff007f,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.45
+        });
+        const tetraDown = new THREE.Mesh(tetraDownGeo, tetraDownMat);
+        tetraDown.rotation.z = -Math.PI / 4;
+        tetraDown.rotation.x = -Math.atan(1 / Math.SQRT2) + Math.PI;
+        masterGroup.add(tetraDown);
+
+        // --- 6. KURAMOTO SISTERBROOD OSCILLATORS (13 CYAN + 17 MAGENTA = 30 NODES) ---
+        const BROOD_P = 13;
+        const BROOD_Q = 17;
+        const N_TOTAL = BROOD_P + BROOD_Q;
+        const ORBIT_R = 2.65;
+
+        const oscillators = [];
+        const oscillatorMeshes = [];
+
+        function initOscillators() {
+            oscillators.length = 0;
+            for (let i = 0; i < N_TOTAL; i++) {
+                const isBroodP = i < BROOD_P;
+                // Natural frequency spread around central carrier
+                const omega = isBroodP
+                    ? 1.15 + 0.35 * Math.sin(i * 13)
+                    : 0.85 + 0.35 * Math.cos(i * 17);
+                oscillators.push({
+                    theta: Math.random() * Math.PI * 2,
+                    omega: omega,
+                    isBroodP: isBroodP,
+                    index: i
+                });
+            }
+        }
+        initOscillators();
+
+        // Create 3D meshes & connecting phase-filament ring
+        const nodeSphereGeo = new THREE.SphereGeometry(0.075, 16, 16);
+        oscillators.forEach((osc) => {
+            const mat = new THREE.MeshStandardMaterial({
+                color: osc.isBroodP ? 0x00ffcc : 0xff007f,
+                emissive: osc.isBroodP ? 0x00aa88 : 0xaa0055,
+                roughness: 0.2,
+                metalness: 0.8
+            });
+            const mesh = new THREE.Mesh(nodeSphereGeo, mat);
+            masterGroup.add(mesh);
+            oscillatorMeshes.push(mesh);
+        });
+
+        // Guide Torus Ring for the Sisterbrood Orbit
+        const guideRingGeo = new THREE.TorusGeometry(ORBIT_R, 0.008, 12, 128);
+        const guideRingMat = new THREE.MeshBasicMaterial({
+            color: 0x1a2b4c,
+            transparent: true,
+            opacity: 0.5
+        });
+        const guideRing = new THREE.Mesh(guideRingGeo, guideRingMat);
+        guideRing.rotation.x = Math.PI / 2;
+        masterGroup.add(guideRing);
+
+        // --- 7. WEB AUDIO API SISTERBROOD HARMONIC SYNTHESIZER ---
+        let audioCtx = null;
+        let osc13 = null, osc17 = null, osc432 = null;
+        let masterGain = null, shimmerGain = null;
+        let isAudioActive = false;
+
+        function toggleAudio() {
+            const btn = document.getElementById('btn-audio');
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                masterGain = audioCtx.createGain();
+                masterGain.gain.setValueAtTime(0.07, audioCtx.currentTime);
+
+                shimmerGain = audioCtx.createGain();
+                shimmerGain.gain.setValueAtTime(0.015, audioCtx.currentTime);
+
+                // Brood XIII Fundamental (65.41 Hz - C2)
+                osc13 = audioCtx.createOscillator();
+                osc13.type = 'triangle';
+                osc13.frequency.setValueAtTime(65.41, audioCtx.currentTime);
+
+                // Brood XVII Prime Ratio (65.41 * 17 / 13 = 85.536 Hz)
+                osc17 = audioCtx.createOscillator();
+                osc17.type = 'sine';
+                osc17.frequency.setValueAtTime(65.41 * (17 / 13), audioCtx.currentTime);
+
+                // 432 Hz Acoustic Handshake Carrier
+                osc432 = audioCtx.createOscillator();
+                osc432.type = 'sine';
+                osc432.frequency.setValueAtTime(432.0, audioCtx.currentTime);
+
+                osc13.connect(masterGain);
+                osc17.connect(masterGain);
+                osc432.connect(shimmerGain);
+
+                masterGain.connect(audioCtx.destination);
+                shimmerGain.connect(audioCtx.destination);
+
+                osc13.start();
+                osc17.start();
+                osc432.start();
+                isAudioActive = true;
+                btn.innerText = "🔇 MUTE RESONATOR";
+                btn.classList.add('active');
+            } else if (isAudioActive) {
+                audioCtx.suspend();
+                isAudioActive = false;
+                btn.innerText = "🔊 IGNITE RESONATOR";
+                btn.classList.remove('active');
+            } else {
+                audioCtx.resume();
+                isAudioActive = true;
+                btn.innerText = "🔇 MUTE RESONATOR";
+                btn.classList.add('active');
+            }
+        }
+
+        document.getElementById('btn-audio').addEventListener('click', toggleAudio);
+        document.getElementById('btn-scatter').addEventListener('click', () => {
+            oscillators.forEach(o => { o.theta = Math.random() * Math.PI * 2; });
+        });
+
+        // --- 8. UI SLIDERS & TELEMETRY ---
+        const sliderK = document.getElementById('slider-k');
+        const sliderMode = document.getElementById('slider-mode');
+        const sliderSpin = document.getElementById('slider-spin');
+
+        sliderK.addEventListener('input', () => {
+            document.getElementById('val-k').innerText = parseFloat(sliderK.value).toFixed(2);
+        });
+        sliderMode.addEventListener('input', () => {
+            document.getElementById('val-mode').innerText = sliderMode.value;
+        });
+        sliderSpin.addEventListener('input', () => {
+            document.getElementById('val-spin').innerText = parseFloat(sliderSpin.value).toFixed(1);
+        });
+
+        // --- 9. KURAMOTO STEP & ANIMATION LOOP ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = Math.min(clock.getDelta(), 0.05);
+            const elapsed = clock.getElapsedTime();
+
+            const K = parseFloat(sliderK.value);
+            const modeL = parseInt(sliderMode.value);
+            const spinSpeed = parseFloat(sliderSpin.value);
+
+            // 1. Compute Kuramoto Order Parameter r * e^(i * psi)
+            let sumCos = 0.0;
+            let sumSin = 0.0;
+            for (let i = 0; i < N_TOTAL; i++) {
+                sumCos += Math.cos(oscillators[i].theta);
+                sumSin += Math.sin(oscillators[i].theta);
+            }
+            const r = Math.sqrt(sumCos * sumCos + sumSin * sumSin) / N_TOTAL;
+            const psi = Math.atan2(sumSin, sumCos);
+
+            // 2. Integrate Kuramoto Phase Equation: dtheta_i/dt = omega_i + K * r * sin(psi - theta_i)
+            for (let i = 0; i < N_TOTAL; i++) {
+                const osc = oscillators[i];
+                const dTheta = osc.omega + K * r * Math.sin(psi - osc.theta);
+                osc.theta = (osc.theta + dTheta * dt) % (Math.PI * 2);
+
+                // Position nodes along braided 3D orbit around Axis-Mundi
+                const braidTilt = osc.isBroodP ? 0.28 : -0.28;
+                const yWave = Math.sin(osc.theta * (osc.isBroodP ? 3 : 4) + elapsed) * 0.35;
+                const x = ORBIT_R * Math.cos(osc.theta);
+                const z = ORBIT_R * Math.sin(osc.theta);
+                const y = yWave + Math.sin(osc.theta) * braidTilt;
+
+                oscillatorMeshes[i].position.set(x, y, z);
+            }
+
+            // 3. Deform Central 3D Macro-Cymatic Sphere via Spherical Harmonics
+            const posAttr = cymaticGeo.attributes.position;
+            for (let i = 0; i < posAttr.count; i++) {
+                const vx = basePositions[i * 3];
+                const vy = basePositions[i * 3 + 1];
+                const vz = basePositions[i * 3 + 2];
+
+                const len = Math.sqrt(vx * vx + vy * vy + vz * vz);
+                const nx = vx / len;
+                const ny = vy / len;
+                const nz = vz / len;
+
+                const theta = Math.acos(ny);
+                const phi = Math.atan2(nz, nx);
+
+                // Standing cymatic wave modulated by Order Parameter r
+                const harmonic = Math.sin(modeL * theta + elapsed * 1.5) * Math.cos((modeL + 2) * phi - elapsed);
+                const chaosJitter = (1.0 - r) * 0.14 * Math.sin(i * 19 + elapsed * 8.0);
+                const displacement = 1.0 + (0.18 * r * harmonic) + chaosJitter;
+
+                posAttr.setXYZ(i, vx * displacement, vy * displacement, vz * displacement);
+            }
+            posAttr.needsUpdate = true;
+            cymaticSphere.rotation.y += 0.25 * dt * spinSpeed;
+
+            // 4. Counter-rotate Stella Octangula
+            tetraUp.rotation.y += 0.45 * dt * spinSpeed;
+            tetraDown.rotation.y -= 0.45 * dt * spinSpeed;
+
+            // 5. Modulate Web Audio Shimmer with Phase Coherence r(t)
+            if (isAudioActive && audioCtx && shimmerGain) {
+                shimmerGain.gain.setTargetAtTime(0.005 + 0.03 * r, audioCtx.currentTime, 0.08);
+            }
+
+            // 6. Update Telemetry HUD
+            document.getElementById('tele-r').innerText = r.toFixed(3);
+            document.getElementById('r-meter').style.width = `${Math.min(100, r * 100)}%`;
+
+            const teleOmega = document.getElementById('tele-omega');
+            const teleState = document.getElementById('tele-state');
+            if (r > 0.85) {
+                teleOmega.innerText = "Ω = 0 (LAMINAR PHASE-LOCK)";
+                teleState.innerText = "STATE: SISTERBROOD COHERENCE LOCKED";
+                teleState.style.borderColor = "#00FFCC";
+                teleState.style.color = "#00FFCC";
+                cymaticMat.emissive.setHex(0x00ffcc);
+            } else {
+                teleOmega.innerText = "Ω > 0 (PHASE DISPERSION)";
+                teleState.innerText = "STATE: SEEKING KURAMOTO THRESHOLD";
+                teleState.style.borderColor = "#FF007F";
+                teleState.style.color = "#FF007F";
+                cymaticMat.emissive.setHex(0xff007f);
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            updateLayoutOffset();
+        });
+
+        animate();
+    </script>
+</body>
+</html>
