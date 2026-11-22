@@ -1,396 +1,603 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PRIME TORUS MANIFOLD (T²) // WEBGL & AUDIO CANVAS</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-        }
-        body {
-            background-color: #05050A;
-            color: #00FFCC;
-            font-family: 'Courier New', Courier, monospace;
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-        }
-        #canvas-container {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 1;
-        }
-        .ui-panel {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10;
-            background: rgba(10, 10, 20, 0.88);
-            border: 1px solid #1A2B4C;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.15);
-            backdrop-filter: blur(8px);
-            width: 320px;
-        }
-        h1 {
-            font-size: 14px;
-            letter-spacing: 1.5px;
-            color: #00FFCC;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-        }
-        h2 {
-            font-size: 10px;
-            color: #FF007F;
-            margin-bottom: 15px;
-            letter-spacing: 1px;
-        }
-        .control-group {
-            margin-bottom: 12px;
-        }
-        label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            color: #8A9BA8;
-            margin-bottom: 4px;
-        }
-        input[type=range] {
-            width: 100%;
-            accent-color: #00FFCC;
-            background: #121C2B;
-            height: 4px;
-            border-radius: 2px;
-        }
-        .audio-btn {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            margin-bottom: 12px;
-            background: rgba(0, 255, 204, 0.1);
-            border: 1px solid #00FFCC;
-            color: #00FFCC;
-            font-family: inherit;
-            font-size: 11px;
-            font-weight: bold;
-            letter-spacing: 1px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .audio-btn:hover {
-            background: rgba(0, 255, 204, 0.25);
-            box-shadow: 0 0 10px rgba(0, 255, 204, 0.4);
-        }
-        .audio-btn.active {
-            background: rgba(255, 0, 127, 0.2);
-            border-color: #FF007F;
-            color: #FF007F;
-        }
-        .telemetry {
-            margin-top: 15px;
-            padding-top: 12px;
-            border-top: 1px solid #121C2B;
-            font-size: 10px;
-            color: #FFD700;
-            line-height: 1.5;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 2px 6px;
-            background: rgba(0, 255, 204, 0.1);
-            border: 1px solid #00FFCC;
-            border-radius: 3px;
-            color: #00FFCC;
-            font-size: 9px;
-            margin-top: 8px;
-        }
-    </style>
-    <!-- Three.js and OrbitControls CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Magicicada Chorus Rise // Topological &amp; Spectral Observatory</title>
+  <style>
+    :root {
+      --bg: #05050a;
+      --panel: rgba(10, 12, 22, 0.76);
+      --border: rgba(0, 255, 204, 0.22);
+      --border-hover: rgba(255, 215, 0, 0.65);
+      --cyan: #00ffcc;
+      --magenta: #ff007f;
+      --gold: #ffd700;
+      --text: #e8ecf5;
+      --muted: #8e99b2;
+      --mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      overflow-x: hidden;
+    }
+
+    canvas#bg-shader {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      display: block;
+    }
+
+    .hud-toggle {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 20;
+      background: rgba(5, 5, 10, 0.85);
+      color: var(--cyan);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-family: var(--mono);
+      font-size: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s ease;
+    }
+    .hud-toggle:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      box-shadow: 0 0 16px rgba(255, 215, 0, 0.25);
+    }
+
+    main#shell {
+      position: relative;
+      z-index: 5;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 22px 64px;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    main#shell.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+    }
+
+    header.topbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      color: var(--cyan);
+    }
+    .pill.gold { color: var(--gold); border-color: rgba(255, 215, 0, 0.35); }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 10px var(--gold);
+      animation: pulse 1.6s infinite ease-in-out;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.45); opacity: 0.55; }
+    }
+
+    .hero {
+      background: linear-gradient(145deg, rgba(10, 12, 22, 0.84), rgba(5, 5, 10, 0.72));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px 30px;
+      backdrop-filter: blur(14px);
+      margin-bottom: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
+    }
+
+    .hero h1 {
+      font-size: clamp(1.75rem, 3.4vw, 2.65rem);
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, var(--cyan), #ffffff 48%, var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p.subtitle {
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+      max-width: 78ch;
+      margin-bottom: 20px;
+    }
+
+    .invariants {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .inv-box {
+      background: rgba(5, 5, 10, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-family: var(--mono);
+    }
+    .inv-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .inv-val { font-size: 14px; color: var(--gold); margin-top: 4px; }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .ctrl-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .ctrl-head {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text);
+    }
+    .ctrl-head span.val { color: var(--cyan); }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--cyan);
+      cursor: pointer;
+    }
+
+    .section-title {
+      font-family: var(--mono);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--cyan);
+      margin: 28px 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--border), transparent);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(265px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      text-decoration: none;
+      color: inherit;
+      backdrop-filter: blur(12px);
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: var(--border-hover);
+      box-shadow: 0 12px 32px rgba(0, 255, 204, 0.12);
+    }
+
+    .card-tag {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--magenta);
+      margin-bottom: 8px;
+    }
+    .card-tag.gold { color: var(--gold); }
+    .card-tag.cyan { color: var(--cyan); }
+
+    .card h2 {
+      font-size: 1.15rem;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+    .card p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.55;
+      margin-bottom: 16px;
+    }
+    .card-cta {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--cyan);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card:hover .card-cta { color: var(--gold); }
+
+    .modules {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 22px;
+      backdrop-filter: blur(12px);
+    }
+    .mod-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 10px 20px;
+      list-style: none;
+      font-size: 0.88rem;
+    }
+    .mod-list li {
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+    }
+    .mod-list code {
+      font-family: var(--mono);
+      color: var(--cyan);
+      font-size: 0.83rem;
+    }
+
+    footer {
+      margin-top: 34px;
+      padding-top: 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 14px;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+    footer a {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+    footer a:hover { color: var(--gold); text-decoration: underline; }
+    .links-row { display: flex; flex-wrap: wrap; gap: 16px; font-family: var(--mono); font-size: 12px; }
+  </style>
 </head>
 <body>
+  <canvas id="bg-shader"></canvas>
+  <button class="hud-toggle" id="hudBtn" type="button">[HUD: ON]</button>
 
-    <div id="canvas-container"></div>
+  <main id="shell">
+    <header class="topbar">
+      <div class="pill gold"><span class="dot"></span> 64.0 Hz PILOT SYNC // 65.41 Hz C2 ANCHOR</div>
+      <div class="pill">MANIFOLD: T² (13, 17) &oplus; O (FANO)</div>
+      <div class="pill">STATE: &Omega; = 0 // ALWAYS ADDITIVE</div>
+    </header>
 
-    <div class="ui-panel">
-        <h1>Prime Torus Manifold</h1>
-        <h2>Phase-Lock Winding Orbit (T²)</h2>
+    <section class="hero">
+      <h1>Magicicada Chorus Rise</h1>
+      <p class="subtitle">
+        Non-linear phase-lock, topological geometry, and spectral DSP engine coupling coprime cicada emergence cycles
+        <strong>(13, 17)</strong>, non-Abelian braid groups <strong>B₃</strong>, non-commutative commutators
+        <strong>&Phi; = [H, C] &ne; 0</strong>, and 8D octonionic rotations in real-time GPU shaders and Python signal pipelines.
+      </p>
 
-        <button id="btn-audio" class="audio-btn">🔊 INITIALIZE AUDIO SYNTHESIZER</button>
-
-        <div class="control-group">
-            <label>Prime Brood P (p): <span id="val-p">13</span></label>
-            <input type="range" id="slider-p" min="1" max="31" step="1" value="13">
+      <div class="invariants">
+        <div class="inv-box">
+          <div class="inv-label">Commutator Operator</div>
+          <div class="inv-val">&Phi; = [H, C] = 2(H &times; C)</div>
         </div>
-
-        <div class="control-group">
-            <label>Prime Brood Q (q): <span id="val-q">17</span></label>
-            <input type="range" id="slider-q" min="1" max="37" step="1" value="17">
+        <div class="inv-box">
+          <div class="inv-label">Coprime Torus Knot</div>
+          <div class="inv-val">gcd(13,17)=1 // lcm=221</div>
         </div>
-
-        <div class="control-group">
-            <label>Phase Velocity (τ): <span id="val-speed">1.0</span></label>
-            <input type="range" id="slider-speed" min="0" max="3.0" step="0.1" value="1.0">
+        <div class="inv-box">
+          <div class="inv-label">Braid Group B₃ Triad</div>
+          <div class="inv-val">65.41 | 196.0 | 293.66 Hz</div>
         </div>
-
-        <div class="control-group">
-            <label>Knot Tube Radius (r): <span id="val-tube">0.03</span></label>
-            <input type="range" id="slider-tube" min="0.01" max="0.08" step="0.005" value="0.03">
+        <div class="inv-box">
+          <div class="inv-label">Octonionic &amp; Lattice</div>
+          <div class="inv-val">8D Fano &oplus; Mod-29 Field</div>
         </div>
+      </div>
 
-        <div class="telemetry">
-            <div>Winding Ratio: <span id="tele-ratio">13 / 17 (Prime Coprime)</span></div>
-            <div>Phase Origin Anchor: <span id="tele-freq-p">65.41 Hz</span> | <span id="tele-freq-q">65.41 Hz</span></div>
-            <div>Ohmic Drag: Ω = 0</div>
-            <div class="status-badge" id="tele-coprime">STATE: COPRIME PHASE LOCK</div>
+      <div class="controls">
+        <div class="ctrl-group">
+          <div class="ctrl-head"><span>Kinetic Winding (p)</span><span class="val" id="valP">13</span></div>
+          <input type="range" id="sliderP" min="3" max="29" step="1" value="13" />
         </div>
-    </div>
+        <div class="ctrl-group">
+          <div class="ctrl-head"><span>Structural Winding (q)</span><span class="val" id="valQ">17</span></div>
+          <input type="range" id="sliderQ" min="5" max="31" step="1" value="17" />
+        </div>
+        <div class="ctrl-group">
+          <div class="ctrl-head"><span>Commutator Torque (&Phi;)</span><span class="val" id="valPhi">1.00</span></div>
+          <input type="range" id="sliderPhi" min="0" max="2" step="0.05" value="1.00" />
+        </div>
+      </div>
+    </section>
 
-    <script>
-        // --- 1. PARAMETRIC KNOT CURVE CLASS ---
-        class PrimeTorusKnotCurve extends THREE.Curve {
-            constructor(p = 13, q = 17, R = 2.5, r = 0.9) {
-                super();
-                this.p = p;
-                this.q = q;
-                this.R = R;
-                this.r = r;
-            }
-            getPoint(t, optionalTarget = new THREE.Vector3()) {
-                const theta = t * Math.PI * 2;
-                const x = (this.R + this.r * Math.cos(this.q * theta)) * Math.cos(this.p * theta);
-                const y = (this.R + this.r * Math.cos(this.q * theta)) * Math.sin(this.p * theta);
-                const z = this.r * Math.sin(this.q * theta);
-                return optionalTarget.set(x, y, z);
-            }
+    <div class="section-title">Interactive WebGL2 / GLSL Engines</div>
+    <section class="grid">
+      <a class="card" href="./prime_torus_webgl.html">
+        <div>
+          <div class="card-tag cyan">ENGINE 01 // T² TORUS KNOT</div>
+          <h2>Prime Torus &amp; Braid Visualizer</h2>
+          <p>Interactive Three.js &amp; WebGL phase-space knot tracking coprime (p, q) windings and &tau; torsion across T².</p>
+        </div>
+        <span class="card-cta">Launch Torus Canvas &rarr;</span>
+      </a>
+
+      <a class="card" href="./octonionic_shader_webgl.html">
+        <div>
+          <div class="card-tag">ENGINE 02 // 8D OCTONIONS &Oopf;</div>
+          <h2>Octonionic Fano-Plane Shader</h2>
+          <p>Hypercomplex raymarched 8D cross-rotations across imaginary basis units e₁…e₇ governed by the 7 oriented Fano triads.</p>
+        </div>
+        <span class="card-cta">Launch Octonion Canvas &rarr;</span>
+      </a>
+
+      <a class="card" href="./sri_meru_octonion_webgl.html">
+        <div>
+          <div class="card-tag gold">ENGINE 03 // 3D SRI MERU &Oopf;</div>
+          <h2>Sri Meru Octonion Lattice</h2>
+          <p>Counter-rotating cyan/magenta triangular wave families projected into 3D stepped elevation around the central Bindu apex.</p>
+        </div>
+        <span class="card-cta">Launch Sri Meru Canvas &rarr;</span>
+      </a>
+
+      <a class="card" href="./kuramoto_sisterbrood_webgl.html">
+        <div>
+          <div class="card-tag cyan">ENGINE 04 // KURAMOTO SYNC</div>
+          <h2>Kuramoto Sister-Brood Field</h2>
+          <p>Coupled phase-oscillator synchronization and collective coherence emergence across prime-period brood cohorts.</p>
+        </div>
+        <span class="card-cta">Launch Kuramoto Canvas &rarr;</span>
+      </a>
+    </section>
+
+    <div class="section-title">Theoretical Blueprints &amp; Python DSP Stack</div>
+    <section class="modules">
+      <ul class="mod-list">
+        <li>
+          <code><a href="https://github.com/HhWolfling/Magicicada-Chorus-Rise/blob/main/HARMONIC_TOPOLOGY.md" style="color:#ffd700;text-decoration:none;">HARMONIC_TOPOLOGY.md</a></code>
+          &mdash; Full pipeline from coprime broods &amp; 8D octonions to the 10-voice Mahavidya STFT matrix.
+        </li>
+        <li><code>src/mixtum_dsp.py</code> &mdash; Non-linear STFT commutator audio synthesizer (&Phi; = [Z_H, Z_C]).</li>
+        <li><code>src/octonion_manifold_rotation.py</code> &mdash; 8D Fano-plane non-associative signal trajectory map.</li>
+        <li><code>src/braid_group_b3.py</code> &mdash; 3D non-Abelian braid word &sigma;₁&sigma;₂⁻¹&sigma;₁&sigma;₂⁻¹ across 65.41 / 196 / 293.66 Hz.</li>
+        <li><code>src/chladni_3d_volumetric_clean.py</code> &mdash; 3D volumetric standing-wave nodal isosurface chamber.</li>
+        <li><code>src/knot_invariants.py</code> &mdash; SymPy verification of Jones V(t) and Alexander &Delta;(t) invariants.</li>
+        <li><code>src/viscoelastic_vorticity_engine.py</code> &mdash; 2D fluid shear vorticity &omega; = &nabla; &times; u &amp; von K&aacute;rm&aacute;n eddies.</li>
+        <li><code>src/prime_kamea_tetractys.py</code> &mdash; 4&times;4 Prime Brood Kamea square &amp; Pythagorean Tetractys grid.</li>
+      </ul>
+    </section>
+
+    <footer>
+      <div>
+        Designed and constructed under sovereign Zamek operational framework (&Omega; = 0) by
+        <strong>Hanna Urba&nacute;ska (HhWolfling)</strong>.
+        Code: AGPL-3.0 &bull; Math &amp; Visuals: CC BY-NC-SA 4.0.
+      </div>
+      <div class="links-row">
+        <a href="https://github.com/HhWolfling/Magicicada-Chorus-Rise">GitHub Repo</a>
+        <a href="https://github.com/HhWolfling/The-Commutator-Theorem">Commutator Theorem</a>
+        <a href="https://github.com/HhWolfling/Gematria-Primus-Lattice-Resonance">Gematria Primus</a>
+        <a href="https://github.com/HhWolfling/Kuramoto-Braid-Glitch">Kuramoto Braid</a>
+        <a href="https://hhwolfling.gumroad.com/l/cuopiw">Gumroad Shader</a>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("bg-shader");
+    const gl = canvas.getContext("webgl");
+
+    const vsSource = `
+      attribute vec2 a_pos;
+      void main() {
+        gl_Position = vec4(a_pos, 0.0, 1.0);
+      }
+    `;
+
+    const fsSource = `
+      #ifdef GL_ES
+      precision highp float;
+      #endif
+
+      uniform float u_time;
+      uniform vec2 u_res;
+      uniform vec2 u_mouse;
+      uniform float u_p;
+      uniform float u_q;
+      uniform float u_phi;
+
+      mat2 rot2(float a) {
+        float c = cos(a), s = sin(a);
+        return mat2(c, -s, s, c);
+      }
+
+      void main() {
+        vec2 uv = (gl_FragCoord.xy - 0.5 * u_res.xy) / min(u_res.x, u_res.y);
+        float r_len = length(uv);
+        float ang = atan(uv.y, uv.x);
+
+        // Pitch-black void + subtle polar Chladni interference grid
+        vec3 col = vec3(0.018, 0.020, 0.042);
+        float chladni = sin(u_p * r_len * 9.0 - u_time * 0.8) * cos(u_q * ang + u_time * 0.4);
+        col += vec3(0.0, 0.08, 0.09) * smoothstep(0.92, 1.0, abs(chladni)) * exp(-r_len * 1.4);
+
+        // Subtle polar coordinate rings
+        float rings = smoothstep(0.004, 0.0, abs(fract(r_len * 5.0) - 0.5) - 0.485);
+        col += vec3(0.06, 0.14, 0.22) * rings * exp(-r_len * 1.6);
+
+        // 65.41 Hz / C2 golden core pulse
+        float beat = 0.85 + 0.15 * sin(u_time * 4.0);
+        float core = exp(-r_len * 11.0) * beat;
+        col += vec3(1.0, 0.843, 0.0) * core * 0.75;
+
+        // 3D (p, q) Coprime Torus Knot + Non-Commutative Commutator Field
+        float ax = 0.55 + (u_mouse.y - 0.5) * 1.3 + u_time * 0.14;
+        float ay = (u_mouse.x - 0.5) * 1.6 + u_time * 0.21;
+
+        vec3 accum = vec3(0.0);
+        const int STEPS = 84;
+        for (int i = 0; i < STEPS; i++) {
+          float t = float(i) / float(STEPS) * 6.28318530718;
+          float phi_t = u_p * t + u_time * 0.45;
+          float theta_t = u_q * t - u_time * 0.32;
+
+          float R = 0.54;
+          float r = 0.22 + 0.035 * sin(u_q * t + u_time);
+
+          // Kinetic strand H (Cyan)
+          vec3 posH = vec3(
+            (R + r * cos(theta_t)) * cos(phi_t),
+            (R + r * cos(theta_t)) * sin(phi_t),
+            r * sin(theta_t)
+          );
+          posH.yz *= rot2(ax);
+          posH.xz *= rot2(ay);
+          vec2 pH = posH.xy / (1.85 - posH.z);
+          float dH = length(uv - pH);
+          accum += vec3(0.0, 1.0, 0.8) * (0.0014 / (dH * dH + 0.00055));
+
+          // Structural strand C (Magenta, phase-inverted)
+          vec3 posC = vec3(
+            (R + r * cos(theta_t + 3.14159265)) * cos(phi_t),
+            (R + r * cos(theta_t + 3.14159265)) * sin(phi_t),
+            r * sin(theta_t + 3.14159265)
+          );
+          posC.yz *= rot2(ax);
+          posC.xz *= rot2(ay);
+          vec2 pC = posC.xy / (1.85 - posC.z);
+          float dC = length(uv - pC);
+          accum += vec3(1.0, 0.0, 0.498) * (0.0013 / (dC * dC + 0.00055));
+
+          // Commutator torque Phi = [H, C] golden interference nodes
+          float bracket = abs(sin(u_p * t - u_q * t + u_time * 0.9));
+          vec2 pPhi = mix(pH, pC, 0.5);
+          float dPhi = length(uv - pPhi);
+          accum += vec3(1.0, 0.843, 0.0) * u_phi * bracket * (0.0009 / (dPhi * dPhi + 0.0008));
         }
 
-        // --- 2. THREE.JS SCENE SETUP ---
-        const container = document.getElementById('canvas-container');
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x05050a);
-        scene.fog = new THREE.FogExp2(0x05050a, 0.08);
+        col += accum / float(STEPS) * 2.6;
+        col = 1.0 - exp(-col * 1.35);
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `;
 
-        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 4, 6);
+    function compile(type, src) {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      return s;
+    }
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        container.appendChild(renderer.domElement);
+    if (gl) {
+      const prog = gl.createProgram();
+      gl.attachShader(prog, compile(gl.VERTEX_SHADER, vsSource));
+      gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSource));
+      gl.linkProgram(prog);
+      gl.useProgram(prog);
 
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
+      const buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
 
-        // --- 3. LIGHTING ---
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
-        scene.add(ambientLight);
+      const aPos = gl.getAttribLocation(prog, "a_pos");
+      gl.enableVertexAttribArray(aPos);
+      gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
-        const pointLight1 = new THREE.PointLight(0x00ffcc, 2, 20);
-        pointLight1.position.set(3, 4, 3);
-        scene.add(pointLight1);
+      const uTime = gl.getUniformLocation(prog, "u_time");
+      const uRes = gl.getUniformLocation(prog, "u_res");
+      const uMouse = gl.getUniformLocation(prog, "u_mouse");
+      const uP = gl.getUniformLocation(prog, "u_p");
+      const uQ = gl.getUniformLocation(prog, "u_q");
+      const uPhi = gl.getUniformLocation(prog, "u_phi");
 
-        const pointLight2 = new THREE.PointLight(0xff007f, 2, 20);
-        pointLight2.position.set(-3, -4, -3);
-        scene.add(pointLight2);
+      let mx = 0.5, my = 0.5;
+      window.addEventListener("pointermove", (e) => {
+        mx = e.clientX / window.innerWidth;
+        my = 1.0 - e.clientY / window.innerHeight;
+      });
 
-        // --- 4. TORUS MANIFOLD WIREFRAME MESH ---
-        const R_major = 2.5;
-        const r_minor = 0.9;
-        const torusGeo = new THREE.TorusGeometry(R_major, r_minor, 32, 64);
-        const torusMat = new THREE.MeshBasicMaterial({
-            color: 0x121c2b,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.25
-        });
-        const torusMesh = new THREE.Mesh(torusGeo, torusMat);
-        torusMesh.rotation.x = Math.PI / 2;
-        scene.add(torusMesh);
+      const sliderP = document.getElementById("sliderP");
+      const sliderQ = document.getElementById("sliderQ");
+      const sliderPhi = document.getElementById("sliderPhi");
+      const valP = document.getElementById("valP");
+      const valQ = document.getElementById("valQ");
+      const valPhi = document.getElementById("valPhi");
 
-        // --- 5. PRIME KNOT GEOMETRY ---
-        let currentP = 13;
-        let currentQ = 17;
-        let tubeRadius = 0.03;
-        let knotMesh, originMarker;
+      sliderP.addEventListener("input", () => valP.textContent = sliderP.value);
+      sliderQ.addEventListener("input", () => valQ.textContent = sliderQ.value);
+      sliderPhi.addEventListener("input", () => valPhi.textContent = Number(sliderPhi.value).toFixed(2));
 
-        function buildKnotGeometry() {
-            if (knotMesh) scene.remove(knotMesh);
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = window.innerWidth * dpr;
+        canvas.height = window.innerHeight * dpr;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      }
+      window.addEventListener("resize", resize);
+      resize();
 
-            const knotCurve = new PrimeTorusKnotCurve(currentP, currentQ, R_major, r_minor);
-            const tubeGeo = new THREE.TubeGeometry(knotCurve, 1200, tubeRadius, 12, true);
-            
-            const tubeMat = new THREE.MeshStandardMaterial({
-                color: 0x00ffcc,
-                emissive: 0x00aa88,
-                roughness: 0.2,
-                metalness: 0.8
-            });
+      const start = performance.now();
+      function frame(now) {
+        gl.uniform1f(uTime, (now - start) * 0.001);
+        gl.uniform2f(uRes, canvas.width, canvas.height);
+        gl.uniform2f(uMouse, mx, my);
+        gl.uniform1f(uP, parseFloat(sliderP.value));
+        gl.uniform1f(uQ, parseFloat(sliderQ.value));
+        gl.uniform1f(uPhi, parseFloat(sliderPhi.value));
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    }
 
-            knotMesh = new THREE.Mesh(tubeGeo, tubeMat);
-            scene.add(knotMesh);
-        }
-
-        const originGeo = new THREE.SphereGeometry(0.12, 32, 32);
-        const originMat = new THREE.MeshBasicMaterial({ color: 0xffd700 });
-        originMarker = new THREE.Mesh(originGeo, originMat);
-        scene.add(originMarker);
-
-        buildKnotGeometry();
-
-        // --- 6. WEB AUDIO API SYNTHESIZER ---
-        let audioCtx = null;
-        let oscP = null, oscQ = null;
-        let gainNode = null;
-        let isAudioPlaying = false;
-        const baseFreq = 65.41; // C2 fundamental anchor
-
-        function initAudio() {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            gainNode = audioCtx.createGain();
-            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime); // Safe volume level
-
-            oscP = audioCtx.createOscillator();
-            oscQ = audioCtx.createOscillator();
-
-            oscP.type = 'sawtooth';
-            oscQ.type = 'sine';
-
-            updateAudioFrequencies();
-
-            oscP.connect(gainNode);
-            oscQ.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            oscP.start();
-            oscQ.start();
-            isAudioPlaying = true;
-        }
-
-        function updateAudioFrequencies() {
-            if (!audioCtx) return;
-            const freqP = baseFreq * (currentP / 13);
-            const freqQ = baseFreq * (currentQ / 17);
-            
-            oscP.frequency.setTargetAtTime(freqP, audioCtx.currentTime, 0.05);
-            oscQ.frequency.setTargetAtTime(freqQ, audioCtx.currentTime, 0.05);
-
-            document.getElementById('tele-freq-p').innerText = `${freqP.toFixed(1)} Hz`;
-            document.getElementById('tele-freq-q').innerText = `${freqQ.toFixed(1)} Hz`;
-        }
-
-        const btnAudio = document.getElementById('btn-audio');
-        btnAudio.addEventListener('click', () => {
-            if (!isAudioPlaying) {
-                initAudio();
-                btnAudio.innerText = "🔇 MUTE AUDIO SYNTHESIZER";
-                btnAudio.classList.add('active');
-            } else {
-                if (audioCtx) {
-                    audioCtx.suspend();
-                    isAudioPlaying = false;
-                    btnAudio.innerText = "🔊 INITIALIZE AUDIO SYNTHESIZER";
-                    btnAudio.classList.remove('active');
-                } else {
-                    audioCtx.resume();
-                    isAudioPlaying = true;
-                    btnAudio.innerText = "🔇 MUTE AUDIO SYNTHESIZER";
-                    btnAudio.classList.add('active');
-                }
-            }
-        });
-
-        // --- 7. UI EVENT LISTENERS ---
-        function gcd(a, b) {
-            return b === 0 ? a : gcd(b, a % b);
-        }
-
-        const sliderP = document.getElementById('slider-p');
-        const sliderQ = document.getElementById('slider-q');
-        const sliderSpeed = document.getElementById('slider-speed');
-        const sliderTube = document.getElementById('slider-tube');
-
-        const valP = document.getElementById('val-p');
-        const valQ = document.getElementById('val-q');
-        const valSpeed = document.getElementById('val-speed');
-        const valTube = document.getElementById('val-tube');
-        const teleRatio = document.getElementById('tele-ratio');
-        const teleCoprime = document.getElementById('tele-coprime');
-
-        function updateKnot() {
-            currentP = parseInt(sliderP.value);
-            currentQ = parseInt(sliderQ.value);
-            tubeRadius = parseFloat(sliderTube.value);
-
-            valP.innerText = currentP;
-            valQ.innerText = currentQ;
-            valTube.innerText = tubeRadius.toFixed(3);
-            teleRatio.innerText = `${currentP} / ${currentQ}`;
-
-            const isCoprime = gcd(currentP, currentQ) === 1;
-            if (isCoprime) {
-                teleCoprime.innerText = "STATE: COPRIME PHASE LOCK";
-                teleCoprime.style.borderColor = "#00FFCC";
-                teleCoprime.style.color = "#00FFCC";
-            } else {
-                teleCoprime.innerText = "STATE: RESONANT COLLAPSE (DEGENERATE)";
-                teleCoprime.style.borderColor = "#FF007F";
-                teleCoprime.style.color = "#FF007F";
-            }
-
-            buildKnotGeometry();
-            updateAudioFrequencies();
-        }
-
-        sliderP.addEventListener('input', updateKnot);
-        sliderQ.addEventListener('input', updateKnot);
-        sliderTube.addEventListener('input', updateKnot);
-        sliderSpeed.addEventListener('input', () => {
-            valSpeed.innerText = parseFloat(sliderSpeed.value).toFixed(1);
-        });
-
-        // --- 8. ANIMATION LOOP ---
-        let clock = new THREE.Clock();
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            const speed = parseFloat(sliderSpeed.value);
-            const delta = clock.getDelta() * speed;
-
-            if (knotMesh) knotMesh.rotation.z += 0.15 * delta;
-            torusMesh.rotation.z += 0.15 * delta;
-
-            const elapsedTime = clock.getElapsedTime() * speed * 0.1;
-            const u = elapsedTime % 1;
-            const curve = new PrimeTorusKnotCurve(currentP, currentQ, R_major, r_minor);
-            const pt = curve.getPoint(u);
-            
-            pt.applyAxisAngle(new THREE.Vector3(0, 0, 1), torusMesh.rotation.z);
-            originMarker.position.copy(pt);
-
-            controls.update();
-            renderer.render(scene, camera);
-        }
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        animate();
-    </script>
+    const hudBtn = document.getElementById("hudBtn");
+    const shell = document.getElementById("shell");
+    hudBtn.addEventListener("click", () => {
+      const hidden = shell.classList.toggle("hidden");
+      hudBtn.textContent = hidden ? "[HUD: OFF]" : "[HUD: ON]";
+    });
+  </script>
 </body>
 </html>
