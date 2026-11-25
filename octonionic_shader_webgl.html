@@ -26,23 +26,33 @@
             top: 0;
             left: 0;
             z-index: 1;
+            cursor: grab;
+        }
+        #canvas-container:active {
+            cursor: grabbing;
         }
         .ui-panel {
             position: absolute;
             top: 20px;
             left: 20px;
             z-index: 10;
-            background: rgba(10, 10, 20, 0.88);
-            border: 1px solid #1A2B4C;
+            background: rgba(8, 10, 18, 0.86);
+            border: 1px solid #1E3352;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.15);
-            backdrop-filter: blur(8px);
-            width: 330px;
+            box-shadow: 0 0 28px rgba(0, 255, 204, 0.14);
+            backdrop-filter: blur(10px);
+            width: 335px;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .ui-panel.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(-14px);
         }
         h1 {
             font-size: 13px;
-            letter-spacing: 1.5px;
+            letter-spacing: 1.6px;
             color: #00FFCC;
             margin-bottom: 4px;
             text-transform: uppercase;
@@ -60,7 +70,7 @@
             display: flex;
             justify-content: space-between;
             font-size: 11px;
-            color: #8A9BA8;
+            color: #93A5B8;
             margin-bottom: 4px;
         }
         input[type=range] {
@@ -69,14 +79,15 @@
             background: #121C2B;
             height: 4px;
             border-radius: 2px;
+            cursor: pointer;
         }
         .telemetry {
-            margin-top: 14px;
+            margin-top: 12px;
             padding-top: 10px;
-            border-top: 1px solid #121C2B;
+            border-top: 1px solid #162438;
             font-size: 10px;
             color: #FFD700;
-            line-height: 1.5;
+            line-height: 1.65;
         }
         .status-badge {
             display: inline-block;
@@ -86,7 +97,53 @@
             border-radius: 3px;
             color: #00FFCC;
             font-size: 9px;
-            margin-top: 8px;
+            margin-top: 6px;
+        }
+        .hotkey-bar {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px dashed #1E3352;
+            font-size: 9px;
+            color: #6E8299;
+            display: flex;
+            justify-content: space-between;
+        }
+        .hotkey-bar span b {
+            color: #00FFCC;
+        }
+        #hud-pill {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 12;
+            padding: 5px 10px;
+            background: rgba(8, 10, 18, 0.78);
+            border: 1px solid rgba(255, 215, 0, 0.45);
+            border-radius: 4px;
+            color: #FFD700;
+            font-size: 10px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+        #hud-pill:hover {
+            border-color: #00FFCC;
+            color: #00FFCC;
+        }
+        #rec-indicator {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            z-index: 12;
+            padding: 6px 12px;
+            background: rgba(255, 0, 127, 0.22);
+            border: 1px solid #FF007F;
+            border-radius: 4px;
+            color: #FF007F;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            display: none;
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -94,10 +151,12 @@
 <body>
 
     <div id="canvas-container"></div>
+    <button id="hud-pill" title="Toggle HUD [H]">HUD [H]</button>
+    <div id="rec-indicator">● REC 5.0s LOOP...</div>
 
-    <div class="ui-panel">
+    <div class="ui-panel" id="ui-panel">
         <h1>8D Octonionic Engine</h1>
-        <h2>GLSL Fano Plane Raymarching (O)</h2>
+        <h2>GLSL Fano Plane Raymarching (𝕆)</h2>
 
         <div class="control-group">
             <label>Prime Brood P (p): <span id="val-p">13</span></label>
@@ -121,14 +180,21 @@
 
         <div class="telemetry">
             <div>Fano Triads: 7 Directed Imaginary Lines</div>
-            <div>Algebra: Non-Associative Octonionic ($\mathbb{O}$)</div>
-            <div>GPU Compute: Parallel GLSL Raymarching</div>
+            <div>Algebra: Non-Associative Octonionic (𝕆)</div>
+            <div>Navigation: Drag Orbit · Scroll Fly-Inside</div>
             <div class="status-badge">STATE: 8D HYPERCOMPLEX FIELD ACTIVE</div>
+        </div>
+
+        <div class="hotkey-bar">
+            <span><b>[H]</b> HUD</span>
+            <span><b>[C]</b> ORBIT</span>
+            <span><b>[S]</b> PNG</span>
+            <span><b>[R]</b> 5s CLIP</span>
+            <span><b>[0]</b> RESET</span>
         </div>
     </div>
 
     <script>
-        // --- 1. GLSL SHADER DEFINITIONS ---
         const vertexShader = `
             varying vec2 vUv;
             void main() {
@@ -138,91 +204,214 @@
         `;
 
         const fragmentShader = `
+            #ifdef GL_ES
+            precision highp float;
+            #endif
+
             uniform vec2 u_resolution;
             uniform float u_time;
             uniform float u_p;
             uniform float u_q;
             uniform float u_density_scale;
+            uniform vec2 u_orbit;
+            uniform float u_zoom;
+            uniform float u_panel_offset;
 
             varying vec2 vUv;
 
-            // Compute 8D Octonionic Fano Field Isosurface
-            float octonionFanoField(vec3 pos) {
-                float x0 = length(pos) - 1.2;
-                float x1 = pos.x * cos(u_time * 0.4 + u_p * 0.1);
-                float x2 = pos.y * sin(u_time * 0.4 + u_q * 0.1);
-                float x3 = pos.z * cos(u_time * 0.3);
-                float x4 = sin(pos.x * (u_p / 13.0) + u_time);
-                float x5 = cos(pos.y * (u_q / 17.0) - u_time);
-                float x6 = sin(pos.z * 1.5);
-                float x7 = cos(length(pos.xy) * 3.0 - u_time * 0.5);
+            mat2 rot2D(float a) {
+                float s = sin(a);
+                float c = cos(a);
+                return mat2(c, -s, s, c);
+            }
 
-                // Fano Triad Non-Associative Couplings
+            vec3 acesFilm(vec3 x) {
+                return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
+            }
+
+            // Capsule SDF for Fano Plane directed triad beams
+            float sdSegment(vec3 p, vec3 a, vec3 b, float r) {
+                vec3 pa = p - a, ba = b - a;
+                float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+                return length(pa - ba * h) - r;
+            }
+
+            // Evaluate Expansive 8D Octonionic Fano Field + 7 Floating Basis Nodes (e1..e7)
+            // Returns vec4(min_dist, shell_dist, node_glow, triad_beam_glow)
+            vec4 octonionFanoField(vec3 pos) {
+                vec3 p = pos;
+                p.xz *= rot2D(u_time * 0.18);
+                p.yz *= rot2D(sin(u_time * 0.14) * 0.28);
+
+                // Symmetric 8D octonion coordinate projection across wide 3D volume
+                float r3 = length(p);
+                float x0 = r3 - 1.55;
+                float x1 = sin(p.x * 1.45 + u_time * 0.55 + u_p * 0.13);
+                float x2 = cos(p.y * 1.45 - u_time * 0.48 + u_q * 0.17);
+                float x3 = sin(p.z * 1.45 + u_time * 0.42);
+                float x4 = cos((p.x + p.y) * (u_p / 13.0) * 1.2 + u_time * 0.7);
+                float x5 = sin((p.y - p.z) * (u_q / 17.0) * 1.2 - u_time * 0.6);
+                float x6 = cos((p.z + p.x) * 1.35 + u_time * 0.5);
+                float x7 = sin(r3 * 2.6 - u_time * 0.9);
+
+                // Balanced Non-Associative Fano Triad Coupling across all octants
                 float t1 = (x1 * x2 - x3) + (x1 * x4 - x5);
                 float t2 = (x1 * x7 - x6) + (x2 * x4 - x6);
                 float t3 = (x2 * x5 - x7) + (x3 * x4 - x7);
                 float t4 = (x3 * x6 - x5);
+                float fanoTension = 0.16 * (t1 + t2 + t3 + t4);
 
                 float norm8D = sqrt(x0*x0 + x1*x1 + x2*x2 + x3*x3 + x4*x4 + x5*x5 + x6*x6 + x7*x7);
-                
-                // Measure deviation from hypercomplex shell boundary (Isosurface at R ~ 1.8)
-                return abs(norm8D - 1.8) + 0.05 * (t1 + t2 + t3 + t4);
+
+                // Dual nested hypercomplex shells (inner core + expansive outer halo)
+                float innerShell = abs(norm8D - 2.15 + fanoTension);
+                float outerShell = abs(norm8D - 2.85 - fanoTension * 0.85) + 0.08;
+                float shellDist = min(innerShell, outerShell);
+
+                // 7 Floating Imaginary Octonion Basis Nodes (e1..e7) with gentle Lissajous drift
+                float pulse = 0.075 + 0.016 * sin(u_time * 2.1);
+                float breath = 1.0 + 0.14 * sin(u_time * 0.7);
+
+                vec3 e7 = vec3(
+                    0.18 * sin(u_time * 0.6),
+                    0.18 * cos(u_time * 0.5),
+                    0.18 * sin(u_time * 0.4)
+                );
+                // Outer Fano triangle vertices (e1, e2, e3)
+                vec3 e1 = vec3(0.0, 1.38, 0.36) * breath + vec3(0.14 * cos(u_time * 0.7), 0.0, 0.16 * sin(u_time * 0.5));
+                vec3 e2 = vec3(-1.20, -0.69, -0.36) * breath + vec3(0.0, 0.15 * sin(u_time * 0.6), -0.16 * cos(u_time * 0.5));
+                vec3 e3 = vec3(1.20, -0.69, -0.36) * breath + vec3(-0.14 * sin(u_time * 0.65), 0.0, 0.16 * cos(u_time * 0.55));
+
+                // Midpoint triad vertices (e4, e5, e6) forming the inscribed Fano circle
+                vec3 e4 = vec3(0.0, -0.82, 0.44) * breath;
+                vec3 e5 = vec3(0.71, 0.41, -0.44) * breath;
+                vec3 e6 = vec3(-0.71, 0.41, -0.44) * breath;
+
+                float dNodes = length(p - e7) - (pulse * 1.3);
+                dNodes = min(dNodes, length(p - e1) - pulse);
+                dNodes = min(dNodes, length(p - e2) - pulse);
+                dNodes = min(dNodes, length(p - e3) - pulse);
+                dNodes = min(dNodes, length(p - e4) - pulse * 0.92);
+                dNodes = min(dNodes, length(p - e5) - pulse * 0.92);
+                dNodes = min(dNodes, length(p - e6) - pulse * 0.92);
+
+                // All 7 Directed Fano Plane Lines:
+                // 3 outer triangle sides + 3 medians through center e7 + inscribed (e4, e5, e6) loop
+                float dBeams = sdSegment(p, e1, e2, 0.009);
+                dBeams = min(dBeams, sdSegment(p, e2, e3, 0.009));
+                dBeams = min(dBeams, sdSegment(p, e3, e1, 0.009));
+                dBeams = min(dBeams, sdSegment(p, e1, e4, 0.008));
+                dBeams = min(dBeams, sdSegment(p, e2, e5, 0.008));
+                dBeams = min(dBeams, sdSegment(p, e3, e6, 0.008));
+                dBeams = min(dBeams, sdSegment(p, e4, e5, 0.007));
+                dBeams = min(dBeams, sdSegment(p, e5, e6, 0.007));
+                dBeams = min(dBeams, sdSegment(p, e6, e4, 0.007));
+
+                float nodeGlow = exp(-20.0 * max(dNodes, 0.0));
+                float beamGlow = exp(-26.0 * max(dBeams, 0.0));
+                float minDist = min(shellDist, min(dNodes, dBeams));
+
+                return vec4(minDist, shellDist, nodeGlow, beamGlow);
             }
 
             void main() {
                 vec2 st = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+                st.x -= u_panel_offset;
 
-                // Shift Ray Origin left (-0.65) so the manifold moves to the right half of the canvas
-                vec3 ro = vec3(-0.65, 0.0, 3.2); 
-                vec3 rd = normalize(vec3(st, -1.0)); 
+                float radius = 4.15 * u_zoom;
+                float yaw = u_orbit.x;
+                float pitch = clamp(u_orbit.y, -1.45, 1.45);
+
+                vec3 ro = vec3(
+                    radius * cos(pitch) * sin(yaw),
+                    radius * sin(pitch),
+                    radius * cos(pitch) * cos(yaw)
+                );
+                vec3 target = vec3(0.0, 0.0, 0.0);
+                vec3 fwd = normalize(target - ro);
+                vec3 right = normalize(cross(fwd, vec3(0.0, 1.0, 0.0001)));
+                vec3 up = cross(right, fwd);
+                vec3 rd = normalize(fwd + st.x * right + st.y * up);
 
                 float t = 0.0;
                 float density = 0.0;
+                float nodeAccum = 0.0;
+                float beamAccum = 0.0;
 
-                // GPU Raymarching Loop
-                for (int i = 0; i < 64; i++) {
+                for (int i = 0; i < 74; i++) {
                     vec3 p = ro + rd * t;
-                    float d = octonionFanoField(p);
-                    
-                    if (d < 0.35) {
-                        density += (0.35 - d) * u_density_scale * 0.8;
+                    vec4 field = octonionFanoField(p);
+                    float d = field.x;
+                    float shellD = field.y;
+
+                    if (shellD < 0.38) {
+                        density += (0.38 - shellD) * u_density_scale * 0.58;
                     }
-                    t += max(d * 0.15, 0.02);
-                    if (t > 5.0) break;
+                    float stepGlow = 0.032 / (1.0 + 28.0 * abs(d));
+                    nodeAccum += field.z * stepGlow * 1.85;
+                    beamAccum += field.w * stepGlow * 1.15;
+
+                    t += max(abs(d) * 0.22, 0.026);
+                    if (t > 7.8) break;
                 }
 
-                // Palette: Pitch-black background (#05050A) to Cyan, Magenta, Gold
-                vec3 bg = vec3(0.02, 0.02, 0.04);
-                vec3 cyan = vec3(0.0, 1.0, 0.8);
-                vec3 magenta = vec3(1.0, 0.0, 0.5);
-                vec3 gold = vec3(1.0, 0.84, 0.0);
+                vec3 bg      = vec3(0.0196, 0.0196, 0.0392); // #05050A
+                vec3 cyan    = vec3(0.0, 1.0, 0.8);          // #00FFCC
+                vec3 magenta = vec3(1.0, 0.0, 0.498);        // #FF007F
+                vec3 gold    = vec3(1.0, 0.843, 0.0);        // #FFD700
 
                 vec3 color = mix(bg, cyan, clamp(density, 0.0, 1.0));
-                color += magenta * pow(clamp(density - 0.4, 0.0, 1.0), 1.8) * 1.8;
-                color += gold * pow(clamp(density - 0.9, 0.0, 1.0), 2.5) * 2.0;
+                color += magenta * pow(clamp(density - 0.36, 0.0, 1.0), 1.65) * 1.75;
+                color += gold    * pow(clamp(density - 0.86, 0.0, 1.0), 2.2) * 1.65;
+                color += gold    * nodeAccum;
+                color += mix(cyan, magenta, 0.5) * beamAccum;
+
+                float vignette = 1.0 - 0.24 * dot(st, st);
+                color = acesFilm(color * vignette * 1.08);
 
                 gl_FragColor = vec4(color, 1.0);
             }
         `;
 
-        // --- 2. THREE.JS SCENE SETUP ---
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
         const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            preserveDrawingBuffer: true
+        });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         container.appendChild(renderer.domElement);
 
-        // --- 3. SHADER MATERIAL & FULL-SCREEN QUAD ---
+        const uiPanel = document.getElementById('ui-panel');
+        const hudPill = document.getElementById('hud-pill');
+        const recIndicator = document.getElementById('rec-indicator');
+
         const uniforms = {
             u_resolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
             u_time: { value: 0.0 },
             u_p: { value: 13.0 },
             u_q: { value: 17.0 },
-            u_density_scale: { value: 1.5 }
+            u_density_scale: { value: 1.5 },
+            u_orbit: { value: new THREE.Vector2(0.0, 0.16) },
+            u_zoom: { value: 1.0 },
+            u_panel_offset: { value: 0.26 }
         };
+
+        // Dynamically center the 8D field in the open right-side viewport when HUD is visible
+        function updateLayoutOffset() {
+            const hidden = uiPanel.classList.contains('hidden');
+            if (!hidden && window.innerWidth > 900) {
+                const hudClearancePx = 375;
+                const shiftPx = hudClearancePx * 0.55;
+                uniforms.u_panel_offset.value = shiftPx / window.innerHeight;
+            } else {
+                uniforms.u_panel_offset.value = 0.0;
+            }
+        }
+        updateLayoutOffset();
 
         const material = new THREE.ShaderMaterial({
             vertexShader: vertexShader,
@@ -230,11 +419,47 @@
             uniforms: uniforms
         });
 
-        const planeGeo = new THREE.PlaneGeometry(2, 2);
-        const planeMesh = new THREE.Mesh(planeGeo, material);
+        const planeMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
         scene.add(planeMesh);
 
-        // --- 4. UI LISTENERS ---
+        // Orbit & Fly-Inside Zoom Controls
+        const orbitState = {
+            yaw: 0.0,
+            pitch: 0.16,
+            zoom: 1.0,
+            autoOrbit: true,
+            dragging: false,
+            lastX: 0,
+            lastY: 0
+        };
+
+        container.addEventListener('pointerdown', (e) => {
+            orbitState.dragging = true;
+            orbitState.autoOrbit = false;
+            orbitState.lastX = e.clientX;
+            orbitState.lastY = e.clientY;
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!orbitState.dragging) return;
+            const dx = e.clientX - orbitState.lastX;
+            const dy = e.clientY - orbitState.lastY;
+            orbitState.lastX = e.clientX;
+            orbitState.lastY = e.clientY;
+            orbitState.yaw -= dx * 0.0075;
+            orbitState.pitch = Math.max(-1.42, Math.min(1.42, orbitState.pitch + dy * 0.0065));
+        });
+
+        window.addEventListener('pointerup', () => {
+            orbitState.dragging = false;
+        });
+
+        container.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            orbitState.zoom = Math.max(0.22, Math.min(2.4, orbitState.zoom + e.deltaY * 0.0008));
+        }, { passive: false });
+
+        // UI Sliders
         const sliderP = document.getElementById('slider-p');
         const sliderQ = document.getElementById('slider-q');
         const sliderDensity = document.getElementById('slider-density');
@@ -256,19 +481,97 @@
             document.getElementById('val-speed').innerText = parseFloat(sliderSpeed.value).toFixed(1);
         });
 
-        // --- 5. ANIMATION LOOP ---
+        function toggleHud() {
+            uiPanel.classList.toggle('hidden');
+            updateLayoutOffset();
+        }
+        hudPill.addEventListener('click', toggleHud);
+
+        let isRecording = false;
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            const key = e.key.toLowerCase();
+
+            if (key === 'h') toggleHud();
+            if (key === 'c') orbitState.autoOrbit = !orbitState.autoOrbit;
+            if (key === '0') {
+                orbitState.yaw = 0.0;
+                orbitState.pitch = 0.16;
+                orbitState.zoom = 1.0;
+            }
+
+            if (key === 's') {
+                const wasVisible = !uiPanel.classList.contains('hidden');
+                uiPanel.classList.add('hidden');
+                hudPill.style.display = 'none';
+                updateLayoutOffset();
+
+                requestAnimationFrame(() => {
+                    renderer.render(scene, camera);
+                    renderer.domElement.toBlob((blob) => {
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = `octonionic-fano-8d-${Date.now()}.png`;
+                        a.click();
+                        URL.revokeObjectURL(a.href);
+
+                        if (wasVisible) uiPanel.classList.remove('hidden');
+                        hudPill.style.display = '';
+                        updateLayoutOffset();
+                    }, 'image/png');
+                });
+            }
+
+            if (key === 'r' && !isRecording) {
+                isRecording = true;
+                recIndicator.style.display = 'block';
+                const stream = renderer.domElement.captureStream(30);
+                const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+                    ? 'video/webm;codecs=vp9'
+                    : 'video/webm';
+                const recorder = new MediaRecorder(stream, { mimeType });
+                const chunks = [];
+
+                recorder.ondataavailable = (ev) => {
+                    if (ev.data && ev.data.size > 0) chunks.push(ev.data);
+                };
+                recorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `octonionic-fano-loop-${Date.now()}.webm`;
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                    isRecording = false;
+                    recIndicator.style.display = 'none';
+                };
+
+                recorder.start();
+                setTimeout(() => recorder.stop(), 5000);
+            }
+        });
+
         const clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
+            const dt = Math.min(clock.getDelta(), 0.05);
             const speed = parseFloat(sliderSpeed.value);
-            uniforms.u_time.value += clock.getDelta() * speed;
+            uniforms.u_time.value += dt * speed;
+
+            if (orbitState.autoOrbit && !orbitState.dragging) {
+                orbitState.yaw += 0.22 * dt;
+            }
+            uniforms.u_orbit.value.set(orbitState.yaw, orbitState.pitch);
+            uniforms.u_zoom.value = orbitState.zoom;
+
             renderer.render(scene, camera);
         }
 
         window.addEventListener('resize', () => {
             uniforms.u_resolution.value.set(window.innerWidth, window.innerHeight);
             renderer.setSize(window.innerWidth, window.innerHeight);
+            updateLayoutOffset();
         });
 
         animate();
