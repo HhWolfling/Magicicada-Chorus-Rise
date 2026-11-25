@@ -14,8 +14,8 @@ Every manifold in this repository is paired 1-to-1 between an interactive 3D Web
 | Manifold | Live Interactive 3D Studio | Repository Source | Standalone GLSL Fragment Shader |
 | :--- | :--- | :--- | :--- |
 | **01. Prime Torus ($\mathbb{T}^2$)** | [Launch Prime Torus Studio](https://hhwolfling.github.io/Magicicada-Chorus-Rise/prime_torus_webgl.html) | `prime_torus_webgl.html` | `prime_torus_shader.glsl` |
-| **02. Kuramoto Sisterbrood** | [Launch Kuramoto Studio](https://hhwolfling.github.io/Magicicada-Chorus-Rise/kuramoto_sisterbrood_webgl_2.html) | `kuramoto_sisterbrood_webgl_2.html` | `kuramoto_sisterbrood_shader.glsl` |
-| **03. 8D Octonionic Fano** | [Launch Octonionic Studio](https://hhwolfling.github.io/Magicicada-Chorus-Rise/octonionic_shader_webgl_3.html) | `octonionic_shader_webgl_3.html` | `octonionic_fano_shader.glsl.txt` |
+| **02. Kuramoto Sisterbrood** | [Launch Kuramoto Studio](https://hhwolfling.github.io/Magicicada-Chorus-Rise/kuramoto_sisterbrood_webgl.html) | `kuramoto_sisterbrood_webgl_2.html` | `kuramoto_sisterbrood_shader.glsl` |
+| **03. 8D Octonionic Fano** | [Launch Octonionic Studio](https://hhwolfling.github.io/Magicicada-Chorus-Rise/octonionic_shader_webgl.html) | `octonionic_shader_webgl_3.html` | `octonionic_fano_shader.glsl.txt` |
 | **04. Sri Meru × 8D Octonion** | [Launch Sri Meru Studio](https://hhwolfling.github.io/Magicicada-Chorus-Rise/sri_meru_octonion_webgl.html) | `sri_meru_octonion_webgl.html` | `sri_meru_octonion_shader.glsl` |
 
 ---
