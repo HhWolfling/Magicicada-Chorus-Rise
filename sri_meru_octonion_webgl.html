@@ -10,7 +10,7 @@
       --cyan: #00FFCC;
       --magenta: #FF007F;
       --gold: #FFD700;
-      --panel-bg: rgba(5, 5, 10, 0.78);
+      --panel-bg: rgba(7, 9, 16, 0.84);
       --border: rgba(0, 255, 204, 0.28);
     }
 
@@ -46,14 +46,14 @@
       position: fixed;
       bottom: 20px;
       left: 20px;
-      width: min(370px, calc(100vw - 40px));
+      width: min(375px, calc(100vw - 40px));
       background: var(--panel-bg);
       border: 1px solid var(--border);
       border-radius: 10px;
       padding: 16px 18px;
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      box-shadow: 0 0 28px rgba(0, 255, 204, 0.08), inset 0 0 18px rgba(255, 0, 127, 0.06);
+      box-shadow: 0 0 28px rgba(0, 255, 204, 0.12), inset 0 0 18px rgba(255, 0, 127, 0.06);
       transition: opacity 0.25s ease, transform 0.25s ease;
       z-index: 10;
     }
@@ -85,7 +85,7 @@
     .hud-tag {
       font-size: 0.68rem;
       color: var(--cyan);
-      opacity: 0.85;
+      opacity: 0.88;
     }
 
     .control-group {
@@ -143,8 +143,8 @@
     }
 
     button {
-      background: rgba(0, 255, 204, 0.07);
-      border: 1px solid rgba(0, 255, 204, 0.35);
+      background: rgba(0, 255, 204, 0.08);
+      border: 1px solid rgba(0, 255, 204, 0.38);
       color: var(--cyan);
       font-family: inherit;
       font-size: 0.71rem;
@@ -157,8 +157,8 @@
     }
 
     button:hover {
-      background: rgba(0, 255, 204, 0.18);
-      box-shadow: 0 0 12px rgba(0, 255, 204, 0.25);
+      background: rgba(0, 255, 204, 0.2);
+      box-shadow: 0 0 12px rgba(0, 255, 204, 0.28);
     }
 
     button.active {
@@ -170,10 +170,16 @@
 
     .hint-bar {
       margin-top: 10px;
-      font-size: 0.65rem;
-      color: rgba(232, 246, 243, 0.55);
+      padding-top: 8px;
+      border-top: 1px dashed rgba(0, 255, 204, 0.2);
+      font-size: 0.64rem;
+      color: rgba(232, 246, 243, 0.62);
       display: flex;
       justify-content: space-between;
+    }
+
+    .hint-bar b {
+      color: var(--cyan);
     }
 
     #toggle-hud-btn {
@@ -182,10 +188,26 @@
       right: 16px;
       z-index: 11;
       background: var(--panel-bg);
-      border-color: rgba(255, 215, 0, 0.35);
+      border-color: rgba(255, 215, 0, 0.4);
       color: var(--gold);
       font-size: 0.68rem;
       padding: 6px 10px;
+    }
+
+    #rec-indicator {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      z-index: 12;
+      padding: 6px 12px;
+      background: rgba(255, 0, 127, 0.22);
+      border: 1px solid var(--magenta);
+      border-radius: 4px;
+      color: var(--magenta);
+      font-size: 0.7rem;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      display: none;
     }
 
     #error-box {
@@ -208,6 +230,7 @@
 <body>
   <canvas id="glcanvas"></canvas>
   <button id="toggle-hud-btn" title="Press H to toggle HUD">HUD [H]</button>
+  <div id="rec-indicator">● REC 5.0s LOOP...</div>
 
   <div id="hud">
     <div class="hud-header">
@@ -245,14 +268,16 @@
     </div>
 
     <div class="hint-bar">
-      <span>Drag: Orbit · Scroll: Zoom</span>
-      <span>[R] Reset View</span>
+      <span><b>[H]</b> HUD</span>
+      <span><b>[C]</b> ORBIT</span>
+      <span><b>[S]</b> PNG</span>
+      <span><b>[R]</b> 5s CLIP</span>
+      <span><b>[0]</b> RESET</span>
     </div>
   </div>
 
   <div id="error-box"></div>
 
-  <!-- Minimal Full-Screen Quad Vertex Shader -->
   <script id="vs" type="x-shader/x-vertex">
     attribute vec2 a_position;
     void main() {
@@ -260,7 +285,6 @@
     }
   </script>
 
-  <!-- Patched Sri Meru Octonion Volumetric Fragment Shader -->
   <script id="fs" type="x-shader/x-fragment">
     #ifdef GL_ES
     precision highp float;
@@ -277,14 +301,12 @@
     const float PI = 3.14159265359;
     const float TAU = 6.28318530718;
 
-    // 2D rotation helper
     mat2 rot2D(float a) {
         float s = sin(a);
         float c = cos(a);
         return mat2(c, -s, s, c);
     }
 
-    // Signed distance to a 2D equilateral triangle (Shiva upward / Shakti downward)
     float sdEquilateralTriangle(vec2 p, float r) {
         const float k = sqrt(3.0);
         p.x = abs(p.x) - r;
@@ -296,20 +318,24 @@
         return -length(p) * sign(p.y);
     }
 
-    // Signed distance to outer square earth-gate (Bhupura)
     float sdBox2D(vec2 p, vec2 b) {
         vec2 d = abs(p) - b;
         return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
     }
 
-    // Evaluate 8D Octonion Field + 3D Sri Meru Stepped Elevation
-    // Returns vec4(distance_estimate, shiva_energy, shakti_energy, bindu_glow)
+    // ACES Filmic Tone Mapping Curve
+    vec3 acesFilm(vec3 x) {
+        return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
+    }
+
+    // Evaluate 8D Octonion Field + 3D Sri Meru Stepped Elevation + Equatorial Astrolabe
+    // Returns vec4(distance_estimate, shiva_energy, shakti_energy, bindu_gold_energy)
     vec4 sriMeruOctonionField(vec3 pos) {
         float pFreq = (u_p > 0.0) ? u_p : 13.0;
         float qFreq = (u_q > 0.0) ? u_q : 17.0;
         float coupling = clamp(u_tau, 0.0, 1.0);
 
-        // PATCHED: Non-commutative 3D imaginary octonion bracket Phi = [H, C] = 2 * (H x C)
+        // Non-commutative 3D imaginary octonion bracket Phi = [H, C] = 2 * (H x C)
         vec3 H_vec = vec3(
             sin(u_time * 1.6180339 + pFreq * 0.13),
             cos(u_time * 1.0000000 + pFreq * 0.17),
@@ -323,78 +349,80 @@
         vec3 bracketHC = cross(H_vec, C_vec) - cross(C_vec, H_vec);
         float commutatorPhi = dot(bracketHC, vec3(0.57735027)) * (0.35 + 0.65 * coupling);
 
-        // Tilt Sri Meru slightly so both top-down Sri Chakra and 3D pyramid elevation read cleanly
         vec3 p = pos;
-        p.yz *= rot2D(0.18 + 0.08 * sin(u_time * 0.25 + commutatorPhi * 0.4));
+        p.yz *= rot2D(0.16 + 0.07 * sin(u_time * 0.25 + commutatorPhi * 0.4));
         p.xz *= rot2D(u_time * 0.18 + commutatorPhi * 0.35);
 
         float radial = length(p.xz);
         float angle = atan(p.z, p.x);
 
-        // -----------------------------------------------------------------------
-        // 1. MAP 3D COORDINATES TO 8D OCTONION VECTOR O = x0 + sum(x_i * e_i)
-        // -----------------------------------------------------------------------
-        // x0 (Real Scalar): Central Bindu / Apex singularity
-        float x0 = length(p - vec3(0.0, 0.78, 0.0)) - 0.06;
+        // 1. Map 3D coordinates to 8D Octonion Vector O = x0 + sum(x_i * e_i)
+        float x0 = length(p - vec3(0.0, 0.80, 0.0)) - 0.055;
 
-        // e1..e7 (7 Imaginary Units): 7 Inner Circuits of Sri Meru
-        float x1 = sdBox2D(p.xz, vec2(1.35)) * cos(u_time * 0.3);                    // Circuit 1: Bhupura
-        float x2 = (radial - 1.12 + 0.04 * cos(16.0 * angle + u_time)) * 0.8;       // Circuit 2: 16-petal lotus
-        float x3 = (radial - 0.94 + 0.04 * sin(8.0 * angle - u_time)) * 0.8;        // Circuit 3: 8-petal lotus
-        float x4 = sdEquilateralTriangle(p.xz, 0.78);                               // Circuit 4: 14-triangle outer
-        float x5 = sdEquilateralTriangle(vec2(p.x, -p.z), 0.62);                    // Circuit 5: 10-triangle outer
-        float x6 = sdEquilateralTriangle(p.xz * rot2D(PI / 6.0), 0.46);             // Circuit 6: 10-triangle inner
-        float x7 = sdEquilateralTriangle(vec2(p.x, -p.z) * rot2D(-PI / 6.0), 0.30); // Circuit 7: 8-triangle Vagdevatas
+        float x1 = sdBox2D(p.xz, vec2(1.35)) * cos(u_time * 0.3);
+        float x2 = (radial - 1.12 + 0.04 * cos(16.0 * angle + u_time)) * 0.8;
+        float x3 = (radial - 0.94 + 0.04 * sin(8.0 * angle - u_time)) * 0.8;
+        float x4 = sdEquilateralTriangle(p.xz, 0.78);
+        float x5 = sdEquilateralTriangle(vec2(p.x, -p.z), 0.62);
+        float x6 = sdEquilateralTriangle(p.xz * rot2D(PI / 6.0), 0.46);
+        float x7 = sdEquilateralTriangle(vec2(p.x, -p.z) * rot2D(-PI / 6.0), 0.30);
 
-        // -----------------------------------------------------------------------
-        // 2. NON-ASSOCIATIVE FANO PLANE TRIAD COUPLING
-        // Triads: (1,2,3), (1,4,5), (1,7,6), (2,4,6), (2,5,7), (3,4,7), (3,6,5)
-        // -----------------------------------------------------------------------
+        // 2. Non-Associative Fano Plane Triad Coupling
         float fano1 = (x1 * x2 - x3) + (x1 * x4 - x5);
         float fano2 = (x1 * x7 - x6) + (x2 * x4 - x6);
         float fano3 = (x2 * x5 - x7) + (x3 * x4 - x7);
         float fano4 = (x3 * x6 - x5);
         float fanoAssociator = (fano1 + fano2 + fano3 + fano4) * 0.08 * coupling;
 
-        // -----------------------------------------------------------------------
-        // 3. INTERLOCKING SHIVA (4 UPWARD) & SHAKTI (5 DOWNWARD) MERU TERRACES
-        // -----------------------------------------------------------------------
-        // 4 Upward Shiva Layers (Electric Cyan)
+        // 3. Interlocking Shiva (4 Upward Cyan) & Shakti (5 Downward Magenta) Meru Terraces
         float shivaField = 1e5;
         for (int i = 0; i < 4; i++) {
             float fi = float(i);
             float scale = 0.82 - fi * 0.16;
             float elev = 0.12 + fi * 0.16;
             vec2 q2 = p.xz * rot2D(fi * 0.08 + u_time * 0.05 * (fi + 1.0) + commutatorPhi * 0.08 * (fi + 1.0));
-            float triUp = abs(sdEquilateralTriangle(q2, scale)) - 0.012;
-            float slab = max(triUp, abs(p.y - elev) - 0.018);
+            float triUp = abs(sdEquilateralTriangle(q2, scale)) - 0.011;
+            float slab = max(triUp, abs(p.y - elev) - 0.016);
             shivaField = min(shivaField, slab);
         }
 
-        // 5 Downward Shakti Layers (Neon Magenta)
         float shaktiField = 1e5;
         for (int j = 0; j < 5; j++) {
             float fj = float(j);
             float scale = 0.88 - fj * 0.145;
             float elev = 0.06 + fj * 0.155;
             vec2 q2 = vec2(p.x, -p.z) * rot2D(-fj * 0.07 - u_time * 0.06 * (fj + 1.0) - commutatorPhi * 0.08 * (fj + 1.0));
-            float triDown = abs(sdEquilateralTriangle(q2, scale)) - 0.012;
-            float slab = max(triDown, abs(p.y - elev) - 0.018);
+            float triDown = abs(sdEquilateralTriangle(q2, scale)) - 0.011;
+            float slab = max(triDown, abs(p.y - elev) - 0.016);
             shaktiField = min(shaktiField, slab);
         }
 
-        // Outer Bhupura Earth-Gate base at y = 0.0
-        float bhupuraRing = max(abs(sdBox2D(p.xz, vec2(1.25))) - 0.015, abs(p.y) - 0.015);
-        float meruStructure = min(min(shivaField, shaktiField), min(bhupuraRing, x0));
+        // 4. Outer Bhupura Earth-Gate & Calibrated Equatorial Astrolabe Orbital Rings
+        float bhupuraRing = max(abs(sdBox2D(p.xz, vec2(1.22))) - 0.013, abs(p.y) - 0.014);
+        float astroRingInner = max(abs(radial - 1.56) - 0.007, abs(p.y) - 0.009);
+        float astroRingOuter = max(abs(radial - 1.82) - 0.009, abs(p.y) - 0.009);
 
-        // Perturb surface gently with 8D Fano associator torsion and (13,17) torus wave
-        float torusHarmonic = 0.012 * sin(pFreq * angle + qFreq * radial - u_time * 2.0 + commutatorPhi);
-        float d = meruStructure + torusHarmonic + fanoAssociator * 0.05;
+        // 36-tick protractor modulation along outer ring
+        float tickWave = smoothstep(0.88, 1.0, cos(angle * 36.0));
+        astroRingOuter -= tickWave * 0.003;
 
-        // Channel weights for color synthesis
-        float shivaGlow = exp(-18.0 * max(shivaField, 0.0));
-        float shaktiGlow = exp(-18.0 * max(shaktiField, 0.0));
-        float binduGlow = exp(-28.0 * max(x0, 0.0));
+        // Orbiting (p, q) prime brood phase nodes along the astrolabe tracks
+        float phaseP = angle * pFreq - u_time * 1.4;
+        float nodeP = length(vec2(radial - 1.56, p.y)) - (0.018 + 0.014 * pow(max(0.0, cos(phaseP)), 6.0));
+
+        float phaseQ = angle * qFreq + u_time * 1.1;
+        float nodeQ = length(vec2(radial - 1.82, p.y)) - (0.018 + 0.014 * pow(max(0.0, cos(phaseQ)), 6.0));
+
+        float astroField = min(min(astroRingInner, astroRingOuter), min(nodeP, nodeQ));
+        float meruStructure = min(min(shivaField, shaktiField), min(min(bhupuraRing, x0), astroField));
+
+        float torusHarmonic = 0.010 * sin(pFreq * angle + qFreq * radial - u_time * 2.0 + commutatorPhi);
+        float d = meruStructure + torusHarmonic + fanoAssociator * 0.045;
+
+        // Channel weights for crisp optical emission
+        float shivaGlow  = exp(-20.0 * max(shivaField, 0.0)) + 0.55 * exp(-26.0 * max(nodeP, 0.0));
+        float shaktiGlow = exp(-20.0 * max(shaktiField, 0.0)) + 0.55 * exp(-26.0 * max(nodeQ, 0.0));
+        float binduGlow  = exp(-30.0 * max(x0, 0.0)) + 0.28 * exp(-24.0 * max(min(bhupuraRing, astroRingOuter), 0.0));
 
         return vec4(d, shivaGlow, shaktiGlow, binduGlow);
     }
@@ -402,9 +430,8 @@
     void main() {
         vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
 
-        // Orbitable camera looking at the 3D Sri Meru center
-        vec3 target = vec3(0.0, 0.35, 0.0);
-        float radius = 2.95 * u_zoom;
+        vec3 target = vec3(0.0, 0.34, 0.0);
+        float radius = 3.05 * u_zoom;
         float yaw = u_orbit.x;
         float pitch = clamp(u_orbit.y, -0.25, 1.54);
 
@@ -420,37 +447,31 @@
         vec3 up = cross(right, fwd);
         vec3 rd = normalize(fwd + uv.x * right + uv.y * up);
 
-        // Volumetric raymarching across the 8D x 3D manifold
         float t = 0.0;
         vec3 accumColor = vec3(0.0);
 
-        // Cyber-Esoteric Palette: Pitch-Black Void, Electric Cyan, Neon Magenta, Radiant Gold
         vec3 colVoid    = vec3(0.0196, 0.0196, 0.0392); // #05050A
-        vec3 colCyan    = vec3(0.0, 1.0, 0.8);          // #00FFCC (Shiva Prakasha)
-        vec3 colMagenta = vec3(1.0, 0.0, 0.498);        // #FF007F (Shakti Vimarsha)
-        vec3 colGold    = vec3(1.0, 0.843, 0.0);        // #FFD700 (Bindu Singularity)
+        vec3 colCyan    = vec3(0.0, 1.0, 0.8);          // #00FFCC
+        vec3 colMagenta = vec3(1.0, 0.0, 0.498);        // #FF007F
+        vec3 colGold    = vec3(1.0, 0.843, 0.0);        // #FFD700
 
-        for (int i = 0; i < 72; i++) {
+        for (int i = 0; i < 76; i++) {
             vec3 pos = ro + rd * t;
             vec4 field = sriMeruOctonionField(pos);
             float d = field.x;
 
-            // Accumulate volumetric emission from Shiva, Shakti, and Bindu layers
-            float stepGlow = 0.028 / (1.0 + 35.0 * abs(d));
-            accumColor += colCyan    * field.y * stepGlow * 1.15;
-            accumColor += colMagenta * field.z * stepGlow * 1.15;
-            accumColor += colGold    * field.w * stepGlow * 1.85;
+            float stepGlow = 0.026 / (1.0 + 38.0 * abs(d));
+            accumColor += colCyan    * field.y * stepGlow * 1.18;
+            accumColor += colMagenta * field.z * stepGlow * 1.18;
+            accumColor += colGold    * field.w * stepGlow * 1.95;
 
-            t += max(abs(d) * 0.45, 0.018);
-            if (t > 7.5) break;
+            t += max(abs(d) * 0.44, 0.017);
+            if (t > 7.8) break;
         }
 
-        // Subtle radial vignette around pitch-black background
-        float vignette = 1.0 - 0.35 * dot(uv, uv);
-        vec3 finalColor = colVoid + accumColor * vignette;
-
-        // Tone-map highlights cleanly without clipping gold/cyan intersections
-        finalColor = finalColor / (1.0 + 0.35 * finalColor);
+        float vignette = 1.0 - 0.32 * dot(uv, uv);
+        vec3 linearColor = colVoid + accumColor * vignette;
+        vec3 finalColor = acesFilm(linearColor * 1.12);
 
         gl_FragColor = vec4(finalColor, 1.0);
     }
@@ -458,7 +479,8 @@
 
   <script>
     const canvas = document.getElementById('glcanvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true, antialias: true })
+            || canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
     const errorBox = document.getElementById('error-box');
 
     function showError(msg) {
@@ -498,7 +520,6 @@
       showError(err.message);
     }
 
-    // Full-screen quad buffer
     const posBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
     gl.bufferData(
@@ -511,7 +532,6 @@
     gl.enableVertexAttribArray(aPos);
     gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
 
-    // Uniform locations
     const uResolution = gl.getUniformLocation(program, 'u_resolution');
     const uTime       = gl.getUniformLocation(program, 'u_time');
     const uP          = gl.getUniformLocation(program, 'u_p');
@@ -520,32 +540,32 @@
     const uOrbit      = gl.getUniformLocation(program, 'u_orbit');
     const uZoom       = gl.getUniformLocation(program, 'u_zoom');
 
-    // Interactive state
     const state = {
       p: 13.0,
       q: 17.0,
       tau: 0.65,
       yaw: 0.0,
-      pitch: 0.36,
-      targetPitch: 0.36,
+      pitch: 0.38,
+      targetPitch: 0.38,
       zoom: 1.0,
       topDown: false,
+      autoOrbit: true,
       dragging: false,
       lastX: 0,
       lastY: 0
     };
 
-    // UI Elements
-    const sliderP   = document.getElementById('slider-p');
-    const sliderQ   = document.getElementById('slider-q');
-    const sliderTau = document.getElementById('slider-tau');
-    const valP      = document.getElementById('val-p');
-    const valQ      = document.getElementById('val-q');
-    const valTau    = document.getElementById('val-tau');
-    const btnView   = document.getElementById('btn-view');
-    const btnAudio  = document.getElementById('btn-audio');
-    const hud       = document.getElementById('hud');
+    const sliderP      = document.getElementById('slider-p');
+    const sliderQ      = document.getElementById('slider-q');
+    const sliderTau    = document.getElementById('slider-tau');
+    const valP         = document.getElementById('val-p');
+    const valQ         = document.getElementById('val-q');
+    const valTau       = document.getElementById('val-tau');
+    const btnView      = document.getElementById('btn-view');
+    const btnAudio     = document.getElementById('btn-audio');
+    const hud          = document.getElementById('hud');
     const toggleHudBtn = document.getElementById('toggle-hud-btn');
+    const recIndicator = document.getElementById('rec-indicator');
 
     sliderP.addEventListener('input', (e) => {
       state.p = parseFloat(e.target.value);
@@ -567,31 +587,108 @@
 
     btnView.addEventListener('click', () => {
       state.topDown = !state.topDown;
-      state.targetPitch = state.topDown ? 1.52 : 0.36;
+      state.targetPitch = state.topDown ? 1.52 : 0.38;
       btnView.textContent = state.topDown ? '3D Meru Elevation' : 'Top-Down Chakra';
       btnView.classList.toggle('active', state.topDown);
     });
 
-    toggleHudBtn.addEventListener('click', () => {
+    function toggleHud() {
       hud.classList.toggle('hidden');
-    });
+    }
+    toggleHudBtn.addEventListener('click', toggleHud);
+
+    let isRecording = false;
+    let latestElapsed = 0.0;
+
+    function drawFrame(elapsed) {
+      gl.uniform2f(uResolution, canvas.width, canvas.height);
+      gl.uniform1f(uTime, elapsed);
+      gl.uniform1f(uP, state.p);
+      gl.uniform1f(uQ, state.q);
+      gl.uniform1f(uTau, state.tau);
+      gl.uniform2f(uOrbit, state.yaw, state.pitch);
+      gl.uniform1f(uZoom, state.zoom);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
 
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'h' || e.key === 'H') {
-        hud.classList.toggle('hidden');
-      } else if (e.key === 'r' || e.key === 'R') {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const key = e.key.toLowerCase();
+
+      // [H] Toggle HUD
+      if (key === 'h') {
+        toggleHud();
+      }
+
+      // [C] Toggle Cinematic Auto-Orbit
+      if (key === 'c') {
+        state.autoOrbit = !state.autoOrbit;
+      }
+
+      // [0] Reset Camera View
+      if (key === '0') {
         state.yaw = 0.0;
-        state.targetPitch = 0.36;
+        state.targetPitch = 0.38;
         state.zoom = 1.0;
         state.topDown = false;
         btnView.textContent = 'Top-Down Chakra';
         btnView.classList.remove('active');
       }
+
+      // [S] Clean HUD-Free PNG Export
+      if (key === 's') {
+        const wasVisible = !hud.classList.contains('hidden');
+        hud.classList.add('hidden');
+        toggleHudBtn.style.display = 'none';
+
+        requestAnimationFrame(() => {
+          drawFrame(latestElapsed);
+          canvas.toBlob((blob) => {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `sri-meru-octonion-${Date.now()}.png`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+
+            if (wasVisible) hud.classList.remove('hidden');
+            toggleHudBtn.style.display = '';
+          }, 'image/png');
+        });
+      }
+
+      // [R] Record 5-Second Seamless Video Loop (.webm)
+      if (key === 'r' && !isRecording) {
+        isRecording = true;
+        recIndicator.style.display = 'block';
+        const stream = canvas.captureStream(30);
+        const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+          ? 'video/webm;codecs=vp9'
+          : 'video/webm';
+        const recorder = new MediaRecorder(stream, { mimeType });
+        const chunks = [];
+
+        recorder.ondataavailable = (ev) => {
+          if (ev.data && ev.data.size > 0) chunks.push(ev.data);
+        };
+        recorder.onstop = () => {
+          const blob = new Blob(chunks, { type: 'video/webm' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = `sri-meru-octonion-loop-${Date.now()}.webm`;
+          a.click();
+          URL.revokeObjectURL(a.href);
+          isRecording = false;
+          recIndicator.style.display = 'none';
+        };
+
+        recorder.start();
+        setTimeout(() => recorder.stop(), 5000);
+      }
     });
 
-    // Pointer drag & wheel zoom
     canvas.addEventListener('pointerdown', (e) => {
       state.dragging = true;
+      state.autoOrbit = false;
       state.lastX = e.clientX;
       state.lastY = e.clientY;
     });
@@ -617,7 +714,6 @@
       state.zoom = Math.max(0.45, Math.min(2.4, state.zoom + e.deltaY * 0.0008));
     }, { passive: false });
 
-    // Optional Web Audio 13:17 Prime Chorus Drone
     let audioCtx = null;
     let oscP = null;
     let oscQ = null;
@@ -639,7 +735,6 @@
 
       filterNode.type = 'lowpass';
       filterNode.Q.value = 4.0;
-
       masterGain.gain.value = 0.0;
 
       oscP.connect(filterNode);
@@ -655,7 +750,7 @@
     function updateAudio() {
       if (!audioRunning || !audioCtx) return;
       const now = audioCtx.currentTime;
-      const baseHz = 110.0; // A2 anchor
+      const baseHz = 110.0;
       const freqP = baseHz * (state.p / 13.0);
       const freqQ = baseHz * (state.q / 13.0);
 
@@ -666,12 +761,8 @@
     }
 
     btnAudio.addEventListener('click', async () => {
-      if (!audioCtx) {
-        initAudio();
-      }
-      if (audioCtx.state === 'suspended') {
-        await audioCtx.resume();
-      }
+      if (!audioCtx) initAudio();
+      if (audioCtx.state === 'suspended') await audioCtx.resume();
 
       audioRunning = !audioRunning;
       const now = audioCtx.currentTime;
@@ -686,7 +777,6 @@
       }
     });
 
-    // Resize & Render Loop
     function resize() {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       const width = Math.floor(window.innerWidth * dpr);
@@ -702,22 +792,20 @@
     resize();
 
     const startTime = performance.now();
+    let lastFrameTime = startTime;
 
     function render(now) {
+      const dt = Math.min((now - lastFrameTime) * 0.001, 0.05);
+      lastFrameTime = now;
       const elapsed = (now - startTime) * 0.001;
+      latestElapsed = elapsed;
 
-      // Smooth interpolation when toggling Top-Down Chakra vs 3D Meru
+      if (state.autoOrbit && !state.dragging) {
+        state.yaw += 0.18 * dt;
+      }
       state.pitch += (state.targetPitch - state.pitch) * 0.08;
 
-      gl.uniform2f(uResolution, canvas.width, canvas.height);
-      gl.uniform1f(uTime, elapsed);
-      gl.uniform1f(uP, state.p);
-      gl.uniform1f(uQ, state.q);
-      gl.uniform1f(uTau, state.tau);
-      gl.uniform2f(uOrbit, state.yaw, state.pitch);
-      gl.uniform1f(uZoom, state.zoom);
-
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      drawFrame(elapsed);
       requestAnimationFrame(render);
     }
 
