@@ -32,17 +32,23 @@
             top: 20px;
             left: 20px;
             z-index: 10;
-            background: rgba(10, 10, 20, 0.88);
-            border: 1px solid #1A2B4C;
+            background: rgba(8, 10, 18, 0.86);
+            border: 1px solid #1E3352;
             padding: 20px;
             border-radius: 8px;
-            box-shadow: 0 0 24px rgba(0, 255, 204, 0.15);
-            backdrop-filter: blur(8px);
-            width: 335px;
+            box-shadow: 0 0 28px rgba(0, 255, 204, 0.14);
+            backdrop-filter: blur(10px);
+            width: 340px;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        .ui-panel.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateX(-14px);
         }
         h1 {
             font-size: 13px;
-            letter-spacing: 1.5px;
+            letter-spacing: 1.6px;
             color: #00FFCC;
             margin-bottom: 4px;
             text-transform: uppercase;
@@ -60,7 +66,7 @@
             display: flex;
             justify-content: space-between;
             font-size: 11px;
-            color: #8A9BA8;
+            color: #93A5B8;
             margin-bottom: 4px;
         }
         input[type=range] {
@@ -74,7 +80,7 @@
         .btn-row {
             display: flex;
             gap: 8px;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
         .action-btn {
             flex: 1;
@@ -91,7 +97,7 @@
             transition: all 0.2s ease;
         }
         .action-btn:hover {
-            background: rgba(0, 255, 204, 0.25);
+            background: rgba(0, 255, 204, 0.24);
             box-shadow: 0 0 12px rgba(0, 255, 204, 0.35);
         }
         .action-btn.active {
@@ -110,10 +116,10 @@
         .telemetry {
             margin-top: 12px;
             padding-top: 10px;
-            border-top: 1px solid #121C2B;
+            border-top: 1px solid #162438;
             font-size: 10px;
             color: #FFD700;
-            line-height: 1.6;
+            line-height: 1.65;
         }
         .meter-bar {
             width: 100%;
@@ -139,6 +145,52 @@
             font-size: 9px;
             margin-top: 6px;
         }
+        .hotkey-bar {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px dashed #1E3352;
+            font-size: 9px;
+            color: #6E8299;
+            display: flex;
+            justify-content: space-between;
+        }
+        .hotkey-bar span b {
+            color: #00FFCC;
+        }
+        #hud-pill {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 12;
+            padding: 5px 10px;
+            background: rgba(8, 10, 18, 0.75);
+            border: 1px solid rgba(255, 215, 0, 0.45);
+            border-radius: 4px;
+            color: #FFD700;
+            font-size: 10px;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+        #hud-pill:hover {
+            border-color: #00FFCC;
+            color: #00FFCC;
+        }
+        #rec-indicator {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            z-index: 12;
+            padding: 6px 12px;
+            background: rgba(255, 0, 127, 0.2);
+            border: 1px solid #FF007F;
+            border-radius: 4px;
+            color: #FF007F;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            display: none;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -146,8 +198,10 @@
 <body>
 
     <div id="canvas-container"></div>
+    <button id="hud-pill" title="Toggle HUD [H]">HUD [H]</button>
+    <div id="rec-indicator">● REC 5.0s LOOP...</div>
 
-    <div class="ui-panel">
+    <div class="ui-panel" id="ui-panel">
         <h1>Kuramoto Sisterbrood</h1>
         <h2>13:17 Biphase Cymatic Resonator</h2>
 
@@ -183,95 +237,214 @@
             <div>Ohmic Drag: <span id="tele-omega">Ω > 0 (DRIFTING)</span></div>
             <div class="status-badge" id="tele-state">STATE: PHASE CONVERGENCE</div>
         </div>
+
+        <div class="hotkey-bar">
+            <span><b>[H]</b> HUD</span>
+            <span><b>[C]</b> ORBIT</span>
+            <span><b>[S]</b> PNG</span>
+            <span><b>[R]</b> 5s CLIP</span>
+        </div>
     </div>
 
     <script>
-        // --- 1. SCENE, CAMERA & RENDERER SETUP ---
+        // --- 1. SCENE, CAMERA & RENDERER SETUP (ACES FILMIC + EXPORT BUFFER) ---
         const container = document.getElementById('canvas-container');
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x05050a);
-        scene.fog = new THREE.FogExp2(0x05050a, 0.045);
+        scene.fog = new THREE.FogExp2(0x05050a, 0.036);
 
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 2.8, 8.8);
+        camera.position.set(0, 2.8, 8.6);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({
+            antialias: true,
+            preserveDrawingBuffer: true
+        });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.18;
         container.appendChild(renderer.domElement);
 
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.75;
 
-        // Master Group offset slightly right on desktop so UI panel never obscures geometry
+        // Pause auto-orbit automatically if the user grabs the scene manually
+        controls.addEventListener('start', () => {
+            controls.autoRotate = false;
+        });
+
         const masterGroup = new THREE.Group();
         function updateLayoutOffset() {
-            masterGroup.position.x = window.innerWidth > 900 ? 1.15 : 0.0;
+            const panelHidden = document.getElementById('ui-panel').classList.contains('hidden');
+            masterGroup.position.x = (!panelHidden && window.innerWidth > 900) ? 1.15 : 0.0;
         }
         updateLayoutOffset();
         scene.add(masterGroup);
 
-        // --- 2. LIGHTING ---
-        scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+        // --- PROCEDURAL RADIAL GLOW TEXTURE FOR OPTICAL HALOS ---
+        function createGlowTexture(hexColor) {
+            const c = document.createElement('canvas');
+            c.width = 128;
+            c.height = 128;
+            const ctx = c.getContext('2d');
+            const grad = ctx.createRadialGradient(64, 64, 2, 64, 64, 62);
+            grad.addColorStop(0.0, '#FFFFFF');
+            grad.addColorStop(0.22, hexColor);
+            grad.addColorStop(0.6, hexColor + '55');
+            grad.addColorStop(1.0, 'rgba(5, 5, 10, 0.0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 128, 128);
+            return new THREE.CanvasTexture(c);
+        }
 
-        const lightCyan = new THREE.PointLight(0x00ffcc, 2.2, 25);
+        const glowTexCyan = createGlowTexture('#00FFCC');
+        const glowTexMagenta = createGlowTexture('#FF007F');
+        const glowTexGold = createGlowTexture('#FFD700');
+
+        // --- 2. LIGHTING ---
+        scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+
+        const lightCyan = new THREE.PointLight(0x00ffcc, 2.6, 28);
         lightCyan.position.set(4, 4, 4);
         masterGroup.add(lightCyan);
 
-        const lightMagenta = new THREE.PointLight(0xff007f, 2.2, 25);
+        const lightMagenta = new THREE.PointLight(0xff007f, 2.6, 28);
         lightMagenta.position.set(-4, -3, -4);
         masterGroup.add(lightMagenta);
 
-        const lightGold = new THREE.PointLight(0xffd700, 1.8, 15);
+        const lightGold = new THREE.PointLight(0xffd700, 2.2, 18);
         lightGold.position.set(0, 0, 0);
         masterGroup.add(lightGold);
 
         // --- 3. AXIS-MUNDI VERTICAL MERIDIAN & TOLT SPINE NODES (5, 13, 25, 41) ---
-        const axisGeo = new THREE.CylinderGeometry(0.015, 0.015, 7.2, 16);
+        const axisGeo = new THREE.CylinderGeometry(0.014, 0.014, 7.4, 16);
         const axisMat = new THREE.MeshBasicMaterial({
             color: 0xffd700,
             transparent: true,
-            opacity: 0.65
+            opacity: 0.72
         });
         const verticalMeridian = new THREE.Mesh(axisGeo, axisMat);
         masterGroup.add(verticalMeridian);
 
-        // Four TOLT Spine Anchor Nodes: (5, 13, 25, 41)
         const spineHeights = [-2.4, -1.5, 1.5, 2.4];
-        const spineRadii = [0.06, 0.08, 0.10, 0.12];
+        const spineRadii = [0.065, 0.085, 0.105, 0.125];
         spineHeights.forEach((yPos, idx) => {
             const nodeGeo = new THREE.OctahedronGeometry(spineRadii[idx], 0);
             const nodeMat = new THREE.MeshBasicMaterial({ color: 0xffd700, wireframe: true });
             const node = new THREE.Mesh(nodeGeo, nodeMat);
             node.position.set(0, yPos, 0);
             masterGroup.add(node);
+
+            const halo = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: glowTexGold,
+                blending: THREE.AdditiveBlending,
+                transparent: true,
+                opacity: 0.55,
+                depthWrite: false
+            }));
+            halo.scale.setScalar(spineRadii[idx] * 5.2);
+            halo.position.set(0, yPos, 0);
+            masterGroup.add(halo);
         });
 
         // --- 4. CENTRAL 3D MACRO-CYMATIC SPHERICAL HARMONIC RESONATOR ---
         const cymaticGeo = new THREE.IcosahedronGeometry(1.05, 5);
         const basePositions = Float32Array.from(cymaticGeo.attributes.position.array);
         const cymaticMat = new THREE.MeshStandardMaterial({
-            color: 0x0a192f,
+            color: 0x102848,
             emissive: 0x00ffcc,
-            emissiveIntensity: 0.25,
+            emissiveIntensity: 0.48,
             wireframe: true,
             transparent: true,
-            opacity: 0.55
+            opacity: 0.68
         });
         const cymaticSphere = new THREE.Mesh(cymaticGeo, cymaticMat);
         masterGroup.add(cymaticSphere);
 
-        // --- 5. INTERLOCKING STELLA OCTANGULA (UPWARD CYAN + DOWNWARD MAGENTA) ---
+        // Luminous Core Glow Sprite
+        const coreSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+            map: glowTexGold,
+            blending: THREE.AdditiveBlending,
+            transparent: true,
+            opacity: 0.45,
+            depthWrite: false
+        }));
+        coreSprite.scale.set(1.65, 1.65, 1.0);
+        masterGroup.add(coreSprite);
+
+        // --- 5. DIELECTRIC FRESNEL CONTAINMENT SHELL (CUSTOM GLSL) ---
+        const fresnelUniforms = {
+            uTime: { value: 0.0 },
+            uCoherence: { value: 0.0 },
+            uColorCyan: { value: new THREE.Color(0x00ffcc) },
+            uColorMagenta: { value: new THREE.Color(0xff007f) },
+            uColorGold: { value: new THREE.Color(0xffd700) }
+        };
+
+        const fresnelMat = new THREE.ShaderMaterial({
+            uniforms: fresnelUniforms,
+            transparent: true,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending,
+            side: THREE.FrontSide,
+            vertexShader: `
+                varying vec3 vWorldNormal;
+                varying vec3 vWorldPos;
+                varying vec3 vLocalPos;
+                void main() {
+                    vLocalPos = position;
+                    vec4 worldPos = modelMatrix * vec4(position, 1.0);
+                    vWorldPos = worldPos.xyz;
+                    vWorldNormal = normalize(mat3(modelMatrix) * normal);
+                    gl_Position = projectionMatrix * viewMatrix * worldPos;
+                }
+            `,
+            fragmentShader: `
+                uniform float uTime;
+                uniform float uCoherence;
+                uniform vec3 uColorCyan;
+                uniform vec3 uColorMagenta;
+                uniform vec3 uColorGold;
+                varying vec3 vWorldNormal;
+                varying vec3 vWorldPos;
+                varying vec3 vLocalPos;
+
+                void main() {
+                    vec3 N = normalize(vWorldNormal);
+                    vec3 V = normalize(cameraPosition - vWorldPos);
+                    float ndotv = abs(dot(N, V));
+                    float fresnel = pow(1.0 - ndotv, 3.2);
+
+                    vec3 p = normalize(vLocalPos);
+                    float lat = abs(sin(p.y * 18.0 + uTime * 0.4));
+                    float lon = abs(sin(atan(p.z, p.x) * 13.0 - uTime * 0.3));
+                    float grid = smoothstep(0.965, 1.0, max(lat, lon)) * 0.24;
+
+                    vec3 rimCol = mix(uColorMagenta, uColorCyan, uCoherence);
+                    rimCol = mix(rimCol, uColorGold, pow(fresnel, 2.0) * 0.35);
+
+                    float alpha = clamp(fresnel * 0.65 + grid * fresnel, 0.0, 0.85);
+                    gl_FragColor = vec4(rimCol * (1.15 + grid), alpha);
+                }
+            `
+        });
+
+        const containmentShell = new THREE.Mesh(new THREE.SphereGeometry(1.92, 48, 48), fresnelMat);
+        masterGroup.add(containmentShell);
+
+        // --- 6. INTERLOCKING STELLA OCTANGULA (UPWARD CYAN + DOWNWARD MAGENTA) ---
         const tetraUpGeo = new THREE.TetrahedronGeometry(1.75, 0);
         const tetraUpMat = new THREE.MeshBasicMaterial({
             color: 0x00ffcc,
             wireframe: true,
             transparent: true,
-            opacity: 0.45
+            opacity: 0.62
         });
         const tetraUp = new THREE.Mesh(tetraUpGeo, tetraUpMat);
-        // Orient vertex straight up along Axis-Mundi
         tetraUp.rotation.z = Math.PI / 4;
         tetraUp.rotation.x = Math.atan(1 / Math.SQRT2);
         masterGroup.add(tetraUp);
@@ -281,66 +454,181 @@
             color: 0xff007f,
             wireframe: true,
             transparent: true,
-            opacity: 0.45
+            opacity: 0.62
         });
         const tetraDown = new THREE.Mesh(tetraDownGeo, tetraDownMat);
         tetraDown.rotation.z = -Math.PI / 4;
         tetraDown.rotation.x = -Math.atan(1 / Math.SQRT2) + Math.PI;
         masterGroup.add(tetraDown);
 
-        // --- 6. KURAMOTO SISTERBROOD OSCILLATORS (13 CYAN + 17 MAGENTA = 30 NODES) ---
+        // --- 7. CALIBRATED 360° ASTROLABE PROTRACTOR & ORDER-PARAMETER NEEDLE ---
+        const ORBIT_R = 2.65;
+
+        function buildAstrolabeReticle() {
+            const group = new THREE.Group();
+
+            // Concentric harmonic calibration rings
+            [2.15, ORBIT_R, 2.95].forEach((r, idx) => {
+                const ringGeo = new THREE.RingGeometry(r - 0.006, r + 0.006, 128);
+                const ringMat = new THREE.MeshBasicMaterial({
+                    color: idx === 1 ? 0x26466d : 0x15263d,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: idx === 1 ? 0.65 : 0.45
+                });
+                const ring = new THREE.Mesh(ringGeo, ringMat);
+                ring.rotation.x = Math.PI / 2;
+                group.add(ring);
+            });
+
+            // 360-degree tick marks (every 10 deg minor, every 30 deg major) + crosshairs
+            const tickPts = [];
+            for (let deg = 0; deg < 360; deg += 10) {
+                const rad = (deg * Math.PI) / 180;
+                const isMajor = deg % 30 === 0;
+                const rIn = isMajor ? 2.82 : 2.89;
+                const rOut = 2.95;
+                tickPts.push(
+                    new THREE.Vector3(Math.cos(rad) * rIn, 0, Math.sin(rad) * rIn),
+                    new THREE.Vector3(Math.cos(rad) * rOut, 0, Math.sin(rad) * rOut)
+                );
+            }
+            // Cardinal axis crosshairs
+            tickPts.push(
+                new THREE.Vector3(-3.15, 0, 0), new THREE.Vector3(3.15, 0, 0),
+                new THREE.Vector3(0, 0, -3.15), new THREE.Vector3(0, 0, 3.15)
+            );
+
+            const tickGeo = new THREE.BufferGeometry().setFromPoints(tickPts);
+            const tickMat = new THREE.LineBasicMaterial({
+                color: 0x2b507a,
+                transparent: true,
+                opacity: 0.55
+            });
+            group.add(new THREE.LineSegments(tickGeo, tickMat));
+            return group;
+        }
+        masterGroup.add(buildAstrolabeReticle());
+
+        // Live Golden Order-Parameter Vector Needle r(t) * exp(i * psi)
+        const needleGeo = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(ORBIT_R, 0, 0)
+        ]);
+        const needleMat = new THREE.LineBasicMaterial({
+            color: 0xffd700,
+            transparent: true,
+            opacity: 0.85
+        });
+        const orderNeedle = new THREE.Line(needleGeo, needleMat);
+        masterGroup.add(orderNeedle);
+
+        // --- 8. KURAMOTO SISTERBROOD OSCILLATORS & LUMINOUS FIBER TRAILS ---
         const BROOD_P = 13;
         const BROOD_Q = 17;
         const N_TOTAL = BROOD_P + BROOD_Q;
-        const ORBIT_R = 2.65;
+        const TRAIL_LEN = 24;
 
         const oscillators = [];
         const oscillatorMeshes = [];
 
-        function initOscillators() {
-            oscillators.length = 0;
-            for (let i = 0; i < N_TOTAL; i++) {
-                const isBroodP = i < BROOD_P;
-                // Natural frequency spread around central carrier
-                const omega = isBroodP
-                    ? 1.15 + 0.35 * Math.sin(i * 13)
-                    : 0.85 + 0.35 * Math.cos(i * 17);
-                oscillators.push({
-                    theta: Math.random() * Math.PI * 2,
-                    omega: omega,
-                    isBroodP: isBroodP,
-                    index: i
-                });
-            }
+        function computeOscillatorPos(osc, elapsed, targetVec) {
+            const braidTilt = osc.isBroodP ? 0.28 : -0.28;
+            const yWave = Math.sin(osc.theta * (osc.isBroodP ? 3 : 4) + elapsed) * 0.35;
+            const x = ORBIT_R * Math.cos(osc.theta);
+            const z = ORBIT_R * Math.sin(osc.theta);
+            const y = yWave + Math.sin(osc.theta) * braidTilt;
+            targetVec.set(x, y, z);
         }
-        initOscillators();
 
-        // Create 3D meshes & connecting phase-filament ring
-        const nodeSphereGeo = new THREE.SphereGeometry(0.075, 16, 16);
+        function resetAllTrails() {
+            const tmp = new THREE.Vector3();
+            oscillators.forEach((osc) => {
+                computeOscillatorPos(osc, 0, tmp);
+                for (let s = 0; s < TRAIL_LEN; s++) {
+                    osc.trail[s].copy(tmp);
+                    osc.trailPositions[s * 3] = tmp.x;
+                    osc.trailPositions[s * 3 + 1] = tmp.y;
+                    osc.trailPositions[s * 3 + 2] = tmp.z;
+                }
+                if (osc.trailGeo) {
+                    osc.trailGeo.attributes.position.needsUpdate = true;
+                }
+            });
+        }
+
+        for (let i = 0; i < N_TOTAL; i++) {
+            const isBroodP = i < BROOD_P;
+            const omega = isBroodP
+                ? 1.15 + 0.35 * Math.sin(i * 13)
+                : 0.85 + 0.35 * Math.cos(i * 17);
+
+            const trail = Array.from({ length: TRAIL_LEN }, () => new THREE.Vector3());
+            const trailPositions = new Float32Array(TRAIL_LEN * 3);
+            const trailColors = new Float32Array(TRAIL_LEN * 3);
+
+            const baseCol = new THREE.Color(isBroodP ? 0x00ffcc : 0xff007f);
+            const bgCol = new THREE.Color(0x05050a);
+
+            for (let s = 0; s < TRAIL_LEN; s++) {
+                const fade = Math.pow(1.0 - s / (TRAIL_LEN - 1), 1.8);
+                const c = bgCol.clone().lerp(baseCol, fade * 0.9);
+                trailColors[s * 3] = c.r;
+                trailColors[s * 3 + 1] = c.g;
+                trailColors[s * 3 + 2] = c.b;
+            }
+
+            const trailGeo = new THREE.BufferGeometry();
+            trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
+            trailGeo.setAttribute('color', new THREE.BufferAttribute(trailColors, 3));
+
+            const trailMat = new THREE.LineBasicMaterial({
+                vertexColors: true,
+                transparent: true,
+                opacity: 0.85,
+                blending: THREE.AdditiveBlending
+            });
+            const trailLine = new THREE.Line(trailGeo, trailMat);
+            masterGroup.add(trailLine);
+
+            oscillators.push({
+                theta: Math.random() * Math.PI * 2,
+                omega: omega,
+                isBroodP: isBroodP,
+                index: i,
+                trail: trail,
+                trailPositions: trailPositions,
+                trailGeo: trailGeo
+            });
+        }
+
+        const nodeSphereGeo = new THREE.SphereGeometry(0.068, 16, 16);
         oscillators.forEach((osc) => {
             const mat = new THREE.MeshStandardMaterial({
                 color: osc.isBroodP ? 0x00ffcc : 0xff007f,
-                emissive: osc.isBroodP ? 0x00aa88 : 0xaa0055,
-                roughness: 0.2,
-                metalness: 0.8
+                emissive: osc.isBroodP ? 0x00ffcc : 0xff007f,
+                emissiveIntensity: 0.75,
+                roughness: 0.15,
+                metalness: 0.7
             });
             const mesh = new THREE.Mesh(nodeSphereGeo, mat);
+
+            const sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: osc.isBroodP ? glowTexCyan : glowTexMagenta,
+                blending: THREE.AdditiveBlending,
+                transparent: true,
+                opacity: 0.72,
+                depthWrite: false
+            }));
+            sprite.scale.set(0.42, 0.42, 1.0);
+            mesh.add(sprite);
+
             masterGroup.add(mesh);
             oscillatorMeshes.push(mesh);
         });
+        resetAllTrails();
 
-        // Guide Torus Ring for the Sisterbrood Orbit
-        const guideRingGeo = new THREE.TorusGeometry(ORBIT_R, 0.008, 12, 128);
-        const guideRingMat = new THREE.MeshBasicMaterial({
-            color: 0x1a2b4c,
-            transparent: true,
-            opacity: 0.5
-        });
-        const guideRing = new THREE.Mesh(guideRingGeo, guideRingMat);
-        guideRing.rotation.x = Math.PI / 2;
-        masterGroup.add(guideRing);
-
-        // --- 7. WEB AUDIO API SISTERBROOD HARMONIC SYNTHESIZER ---
+        // --- 9. WEB AUDIO API SISTERBROOD HARMONIC SYNTHESIZER ---
         let audioCtx = null;
         let osc13 = null, osc17 = null, osc432 = null;
         let masterGain = null, shimmerGain = null;
@@ -400,12 +688,16 @@
         document.getElementById('btn-audio').addEventListener('click', toggleAudio);
         document.getElementById('btn-scatter').addEventListener('click', () => {
             oscillators.forEach(o => { o.theta = Math.random() * Math.PI * 2; });
+            resetAllTrails();
         });
 
-        // --- 8. UI SLIDERS & TELEMETRY ---
+        // --- 10. UI SLIDERS, STUDIO HOTKEYS & TELEMETRY ---
         const sliderK = document.getElementById('slider-k');
         const sliderMode = document.getElementById('slider-mode');
         const sliderSpin = document.getElementById('slider-spin');
+        const uiPanel = document.getElementById('ui-panel');
+        const hudPill = document.getElementById('hud-pill');
+        const recIndicator = document.getElementById('rec-indicator');
 
         sliderK.addEventListener('input', () => {
             document.getElementById('val-k').innerText = parseFloat(sliderK.value).toFixed(2);
@@ -417,8 +709,83 @@
             document.getElementById('val-spin').innerText = parseFloat(sliderSpin.value).toFixed(1);
         });
 
-        // --- 9. KURAMOTO STEP & ANIMATION LOOP ---
+        function toggleHud() {
+            uiPanel.classList.toggle('hidden');
+            updateLayoutOffset();
+        }
+        hudPill.addEventListener('click', toggleHud);
+
+        let isRecording = false;
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            const key = e.key.toLowerCase();
+
+            // [H] Toggle HUD
+            if (key === 'h') {
+                toggleHud();
+            }
+
+            // [C] Toggle Cinematic Auto-Orbit
+            if (key === 'c') {
+                controls.autoRotate = !controls.autoRotate;
+            }
+
+            // [S] Clean, HUD-Free PNG Export
+            if (key === 's') {
+                const wasVisible = !uiPanel.classList.contains('hidden');
+                uiPanel.classList.add('hidden');
+                hudPill.style.display = 'none';
+                updateLayoutOffset();
+
+                requestAnimationFrame(() => {
+                    renderer.render(scene, camera);
+                    renderer.domElement.toBlob((blob) => {
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = `kuramoto-sisterbrood-${Date.now()}.png`;
+                        a.click();
+                        URL.revokeObjectURL(a.href);
+
+                        if (wasVisible) uiPanel.classList.remove('hidden');
+                        hudPill.style.display = '';
+                        updateLayoutOffset();
+                    }, 'image/png');
+                });
+            }
+
+            // [R] Record 5-Second Seamless Video Loop (.webm)
+            if (key === 'r' && !isRecording) {
+                isRecording = true;
+                recIndicator.style.display = 'block';
+                const stream = renderer.domElement.captureStream(30);
+                const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+                    ? 'video/webm;codecs=vp9'
+                    : 'video/webm';
+                const recorder = new MediaRecorder(stream, { mimeType });
+                const chunks = [];
+
+                recorder.ondataavailable = (ev) => {
+                    if (ev.data && ev.data.size > 0) chunks.push(ev.data);
+                };
+                recorder.onstop = () => {
+                    const blob = new Blob(chunks, { type: 'video/webm' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `kuramoto-sisterbrood-loop-${Date.now()}.webm`;
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                    isRecording = false;
+                    recIndicator.style.display = 'none';
+                };
+
+                recorder.start();
+                setTimeout(() => recorder.stop(), 5000);
+            }
+        });
+
+        // --- 11. KURAMOTO STEP & ANIMATION LOOP ---
         const clock = new THREE.Clock();
+        const tmpVec = new THREE.Vector3();
 
         function animate() {
             requestAnimationFrame(animate);
@@ -439,20 +806,36 @@
             const r = Math.sqrt(sumCos * sumCos + sumSin * sumSin) / N_TOTAL;
             const psi = Math.atan2(sumSin, sumCos);
 
+            // Update Golden Order-Parameter Needle on the Astrolabe Plane
+            const needlePositions = orderNeedle.geometry.attributes.position;
+            needlePositions.setXYZ(1, Math.cos(psi) * ORBIT_R * r, 0, Math.sin(psi) * ORBIT_R * r);
+            needlePositions.needsUpdate = true;
+
+            // Update Fresnel Glass Shell Uniforms
+            fresnelUniforms.uTime.value = elapsed;
+            fresnelUniforms.uCoherence.value = r;
+
             // 2. Integrate Kuramoto Phase Equation: dtheta_i/dt = omega_i + K * r * sin(psi - theta_i)
             for (let i = 0; i < N_TOTAL; i++) {
                 const osc = oscillators[i];
                 const dTheta = osc.omega + K * r * Math.sin(psi - osc.theta);
                 osc.theta = (osc.theta + dTheta * dt) % (Math.PI * 2);
 
-                // Position nodes along braided 3D orbit around Axis-Mundi
-                const braidTilt = osc.isBroodP ? 0.28 : -0.28;
-                const yWave = Math.sin(osc.theta * (osc.isBroodP ? 3 : 4) + elapsed) * 0.35;
-                const x = ORBIT_R * Math.cos(osc.theta);
-                const z = ORBIT_R * Math.sin(osc.theta);
-                const y = yWave + Math.sin(osc.theta) * braidTilt;
+                computeOscillatorPos(osc, elapsed, tmpVec);
+                oscillatorMeshes[i].position.copy(tmpVec);
 
-                oscillatorMeshes[i].position.set(x, y, z);
+                // Shift luminous fiber trail
+                for (let s = TRAIL_LEN - 1; s > 0; s--) {
+                    osc.trail[s].copy(osc.trail[s - 1]);
+                    osc.trailPositions[s * 3] = osc.trail[s].x;
+                    osc.trailPositions[s * 3 + 1] = osc.trail[s].y;
+                    osc.trailPositions[s * 3 + 2] = osc.trail[s].z;
+                }
+                osc.trail[0].copy(tmpVec);
+                osc.trailPositions[0] = tmpVec.x;
+                osc.trailPositions[1] = tmpVec.y;
+                osc.trailPositions[2] = tmpVec.z;
+                osc.trailGeo.attributes.position.needsUpdate = true;
             }
 
             // 3. Deform Central 3D Macro-Cymatic Sphere via Spherical Harmonics
@@ -470,7 +853,6 @@
                 const theta = Math.acos(ny);
                 const phi = Math.atan2(nz, nx);
 
-                // Standing cymatic wave modulated by Order Parameter r
                 const harmonic = Math.sin(modeL * theta + elapsed * 1.5) * Math.cos((modeL + 2) * phi - elapsed);
                 const chaosJitter = (1.0 - r) * 0.14 * Math.sin(i * 19 + elapsed * 8.0);
                 const displacement = 1.0 + (0.18 * r * harmonic) + chaosJitter;
