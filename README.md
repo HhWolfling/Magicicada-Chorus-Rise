@@ -1,70 +1,104 @@
-# 🌀 Magicicada Chorus Rise: Non-Linear Phase-Lock & Topological DSP Engine
+# Magicicada Chorus Rise
 
-[![Live Observatory — Portal](https://img.shields.io/badge/Live_Portal-Topological_Observatory-FFD700?style=for-the-badge&logo=githubpages)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/)
-[![Live WebGL — Prime Torus](https://img.shields.io/badge/Live_WebGL-Prime_Torus_Manifold-00FFCC?style=for-the-badge&logo=three.js)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/prime_torus_webgl.html)
-[![Live WebGL — 8D Octonion](https://img.shields.io/badge/Live_WebGL-8D_Octonion_Fano-00FFCC?style=for-the-badge&logo=webgl)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/octonionic_shader_webgl.html)
-[![Live WebGL — Sri Meru Octonion](https://img.shields.io/badge/Live_WebGL-Sri_Meru_Octonion-FF007F?style=for-the-badge&logo=webgl)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/sri_meru_octonion_webgl.html)
-[![Live WebGL — Kuramoto Sisterbrood](https://img.shields.io/badge/Live_WebGL-Kuramoto_Sisterbrood-00FFCC?style=for-the-badge&logo=three.js)](https://hhwolfling.github.io/Magicicada-Chorus-Rise/kuramoto_sisterbrood_webgl.html)
+**Prime-Period Cyclical Emergence ($p = 13, q = 17$), Kuramoto Phase-Locking & 8D Octonionic GLSL Raymarching Engines**
 
-> **A non-linear acoustic synthesis and physical state engine mapping non-Abelian braid groups ($B_3$), prime torus knots ($(13, 17)$ on $\mathbb{T}^2$), viscoelastic vorticity dynamics, hypercomplex octonion rotations ($\mathbb{O}$), and biological relaxation oscillators.**
+> **Live Interactive Observatory:** **[https://hhwolfling.github.io/Magicicada-Chorus-Rise/](https://hhwolfling.github.io/Magicicada-Chorus-Rise/)**  
+> **Digital Releases & Shader Packs:** **[https://hhwolfling.gumroad.com/](https://hhwolfling.gumroad.com/)**
 
 ---
 
-## 🌐 Live Interactive WebGL Visualizers
+## Interactive WebGL Studios & Standalone GLSL Shaders
 
-Experience the high-dimensional phase spaces directly in your browser (with real-time parameter sliders and Web Audio synthesis)[cite: 9]:
+Every manifold in this repository is paired 1-to-1 between an interactive 3D WebGL studio (`.html`) and a pure, dependency-free fragment shader (`.glsl`) ready for Shadertoy, KodeLife, or custom WebGL pipelines.
 
-* **Topological Observatory Portal (`index.html`, `64.0 Hz` + `65.41 Hz` Drone):** [https://hhwolfling.github.io/Magicicada-Chorus-Rise/](https://hhwolfling.github.io/Magicicada-Chorus-Rise/)
-* **Prime Brood Torus Manifold ($(13, 17)$ on $\mathbb{T}^2$):** [https://hhwolfling.github.io/Magicicada-Chorus-Rise/prime_torus_webgl.html](https://hhwolfling.github.io/Magicicada-Chorus-Rise/prime_torus_webgl.html)[cite: 9]
-* **8D Octonionic Fano-Plane Shader ($\mathbb{O}$):** [https://hhwolfling.github.io/Magicicada-Chorus-Rise/octonionic_shader_webgl.html](https://hhwolfling.github.io/Magicicada-Chorus-Rise/octonionic_shader_webgl.html)
-* **8D Octonion × 3D Sri Meru Volumetric Manifold:** [https://hhwolfling.github.io/Magicicada-Chorus-Rise/sri_meru_octonion_webgl.html](https://hhwolfling.github.io/Magicicada-Chorus-Rise/sri_meru_octonion_webgl.html)[cite: 9]
-* **Kuramoto Sisterbrood Resonator ($13:17$ Biphase Cymatic Sphere):** [https://hhwolfling.github.io/Magicicada-Chorus-Rise/kuramoto_sisterbrood_webgl.html](https://hhwolfling.github.io/Magicicada-Chorus-Rise/kuramoto_sisterbrood_webgl.html)
+| Manifold | Live Interactive 3D Studio | Repository Source | Standalone GLSL Fragment Shader |
+| :--- | :--- | :--- | :--- |
+| **01. Prime Torus ($\mathbb{T}^2$)** | [Launch Prime Torus Studio](https://hhwolfling.github.io/Magicicada-Chorus-Rise/prime_torus_webgl.html) | `prime_torus_webgl.html` | `prime_torus_shader.glsl` |
+| **02. Kuramoto Sisterbrood** | [Launch Kuramoto Studio](https://hhwolfling.github.io/Magicicada-Chorus-Rise/kuramoto_sisterbrood_webgl_2.html) | `kuramoto_sisterbrood_webgl_2.html` | `kuramoto_sisterbrood_shader.glsl` |
+| **03. 8D Octonionic Fano** | [Launch Octonionic Studio](https://hhwolfling.github.io/Magicicada-Chorus-Rise/octonionic_shader_webgl_3.html) | `octonionic_shader_webgl_3.html` | `octonionic_fano_shader.glsl.txt` |
+| **04. Sri Meru × 8D Octonion** | [Launch Sri Meru Studio](https://hhwolfling.github.io/Magicicada-Chorus-Rise/sri_meru_octonion_webgl.html) | `sri_meru_octonion_webgl.html` | `sri_meru_octonion_shader.glsl` |
+
+---
+
+## Studio Navigation & Export Hotkeys
+
+All four `.html` WebGL studios share a unified control and capture console:
+
+| Input / Key | Action |
+| :--- | :--- |
+| **Left-Drag** | Orbit 360° around the manifold (yaw & pitch) |
+| **Scroll Wheel** | Fly inside the geometry and zoom through the aperture |
+| **`[H]`** | Toggle the parameter HUD panel (auto-centers the manifold) |
+| **`[C]`** | Toggle smooth cinematic auto-orbit |
+| **`[S]`** | Capture an instant, HUD-free high-DPI `.png` snapshot |
+| **`[R]`** | Record a seamless 5.0-second `.webm` video loop |
+| **`[0]`** | Reset camera orbit and zoom to default observatory view |
 
 ---
 
-## 📐 Mathematical & Physical Framework
+## Mathematical Architecture
 
-The engine models acoustic and physical signal interactions across four core pillars[cite: 9]:
+### 1. Coprime Brood Synchronization ($p = 13, q = 17$)
+Periodical cicada broods avoid destructive harmonic overlap and predator phase-locking by emerging on coprime intervals ($p = 13$ and $q = 17$), delaying full co-emergence to their least common multiple:
 
-### 1. The Commutator Operator ($\Phi$)
-Energy transfer between kinetic transient drive vectors ($H$) and structural anchor vectors ($C$) is governed by non-commutative operator dynamics[cite: 9]:
+$$\text{lcm}(13, 17) = 13 \times 17 = 221 \text{ cycles}$$
 
-$$\Phi = [H, C] = H \cdot C - C \cdot H \neq 0$$
+```text
+Plain text: lcm(13, 17) = 13 * 17 = 221 cycles
+```
 
-*Plaintext version*: Phi equals the commutator bracket of H and C, which is H times C minus C times H, and is non-zero[cite: 9].
+On the Prime Torus ($\mathbb{T}^2$), biphase helical strands wind along the $(13, 17)$ torus knot geodesic governed by:
 
-When $H$ and $C$ are implemented as non-commuting 3D vector cross-products or complex conjugate STFT spectra, continuous energy dissipation collapses into discrete, periodic cardiac relaxation pulses (systole/diastole)[cite: 9].
+$$\psi(\phi, \theta, t) = q\phi - p\theta - \omega t$$
 
-### 2. Prime Brood Coprimality & Torus Winding ($\mathbb{T}^2$)
-The system locks phase trajectories onto a 2D modular torus surface using the $13$-year (*Magicicada tredecim*) and $17$-year (*Magicicada septendecim*) prime brood ratio[cite: 9]:
+```text
+Plain text: psi(phi, theta, t) = q * phi - p * theta - omega * t
+```
 
-$$\gcd(13, 17) = 1, \quad N_{\text{sync}} = 13 \times 17 = 221 \text{ years}$$
+### 2. Kuramoto Phase Coherence & Order Parameter
+In the Sisterbrood resonator, 30 coupled oscillators ($13 + 17$) evolve under sinusoidal phase coupling $K$, measured by the complex Kuramoto order parameter $r(t)$:
 
-*Plaintext version*: The greatest common divisor of 13 and 17 equals 1, and the synchronization interval N_sync equals 13 times 17, which is 221 years[cite: 9].
+$$r(t) e^{i\Psi(t)} = \frac{1}{N} \sum_{j=1}^{N} e^{i\theta_j(t)}$$
 
-Because $p=13$ and $q=17$ are prime integers, the phase winding traces a closed $(13, 17)$ prime torus knot on $\mathbb{T}^2$ with zero self-intersection and zero Ohmic drag[cite: 9]:
+```text
+Plain text: r(t) * exp(i * Psi(t)) = (1 / N) * sum_{j=1..N} exp(i * theta_j(t))
+```
 
-$$\Omega = 0$$
+As coupling tension increases, phase variance collapses ($r(t) \to 1$) and the central spherical-harmonic cymatic core locks into a standing-wave resonance inside a counter-rotating Stella Octangula frame.
 
-*Plaintext version*: The Ohmic drag Omega equals zero[cite: 9].
-
-### 3. Hypercomplex Octonion Rotations ($\mathbb{O}$)
-Signal coordinates rotate across an 8-dimensional normed division algebra governed by the real scalar axis ($x_0$) and the 7 imaginary units of the Fano Plane ($e_1 \dots e_7$)[cite: 9]:
-
-$$\mathbf{O}(t) = x_0(t) + \sum_{i=1}^{7} x_i(t) e_i$$
-
-*Plaintext version*: O(t) is an octonion signal equal to real component x_0(t) plus the sum from i=1 to 7 of x_i(t) times imaginary basis unit e_i[cite: 9].
-
-Because octonionic multiplication is non-associative ($(e_i \cdot e_j) \cdot e_k \neq e_i \cdot (e_j \cdot e_k)$), phase chirps remain uncollapsible in high-dimensional projections[cite: 9].
-
-### 4. Topological Knot Invariants ($B_3$)
-The 3-strand braid generator word $w = \sigma_1 \sigma_2^{-1} \sigma_1 \sigma_2^{-1}$ maps to the immutable Trefoil Knot ($3_1$), yielding time-reversibility under the Alexander Polynomial[cite: 9]:
-
-$$\Delta(t) = t - 1 + t^{-1}, \quad V(t) = t^{-1} + t^{-3} - t^{-4}$$
-
-*Plaintext version*: Alexander polynomial Delta(t) equals t minus 1 plus 1/t, and Jones polynomial V(t) equals 1/t plus 1/t^3 minus 1/t^4[cite: 9].
+### 3. Non-Associative 8D Octonions ($\mathbb{O}$) & ACES Filmic Optics
+The Octonionic Fano and Sri Meru engines project 8-dimensional norm-invariant hyper-shells into 3D signed distance fields modulated by the 7 directed imaginary triads ($e_1 \dots e_7$) of the Fano plane, rendered with ACES filmic tone mapping on `#05050A` void-black with `#00FFCC` cyan, `#FF007F` magenta, and `#FFD700` gold spectral channels.
 
 ---
+
+## Unified GLSL Uniform Contract
+
+All standalone `.glsl` fragment shaders expose a standardized uniform interface for drop-in integration:
+
+```glsl
+uniform vec2 u_resolution; // Viewport dimensions in pixels
+uniform float u_time;      // Elapsed simulation time in seconds
+uniform float u_p;         // Primary prime brood frequency (default: 13.0)
+uniform float u_q;         // Secondary prime brood frequency (default: 17.0)
+uniform float u_tau;       // Phase-lock coupling tension (0.0 .. 1.0)
+```
+
+---
+
+## Running Locally
+
+No build step or package manager is required:
+
+1. Clone the repository:
+   ```bash
+   git clone [https://github.com/HhWolfling/Magicicada-Chorus-Rise.git](https://github.com/HhWolfling/Magicicada-Chorus-Rise.git)
+   cd Magicicada-Chorus-Rise
+   ```
+2. Open `index.html` (or any `*_webgl*.html` studio) directly in a modern WebGL-enabled browser.
+
+---
+
+`[WE_WOZ_HERE]⁹⁹` · **Hanna Urbańska (`HhWolfling`)**
 
 ## 📁 Repository Module Manifest
 
